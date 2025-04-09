@@ -1,0 +1,63 @@
+---
+title: "Unit 1 - A Julia Course"
+execute:
+    error: false # Not sure about this
+    echo: true
+    enabled: true
+    daemon: 300
+engine: julia
+julia:
+    exeflags: ["--project=@.", "--threads=1"]
+    author: 
+        - "Aapeli Vuorinen"
+        - "Yoni Nazarathy"
+format:
+  html:
+    include-in-header:
+        text: |
+            QQQQ-some-style-stuff-here-with-css-QQQ
+    include-before-body:
+        text: |
+            QQQQ-some-image-logo-withAP-logo-and maybe AIMS-QQQQ
+    self-contained-math: true
+    anchor-sections: true
+    theme: default
+    toc: true
+    toc-depth: 4
+    toc-expand: 2
+    toc-location: left
+    toc-title: Contents
+    number-sections: true
+    number-depth: 3
+    code-summary: Show/Hide Code
+    code-tools:
+        caption: Download tutorial
+        source: true
+bibliography: references.bib
+fig-format: svg
+fig-width: 8
+fig-height: 6
+---
+
+### Parametric Plots
+
+Plot function pair (x(u), y(u)). 
+See @fig-parametric for an example.
+
+```{julia}
+1+1
+```
+
+```{julia}
+#| label: fig-parametric
+#| fig-cap: "Parametric Plots"
+
+using Plots
+
+plot(sin, 
+     x->sin(2x), 
+     0, 
+     2π, 
+     leg=false, 
+     fill=(0,:lavender))
+```
