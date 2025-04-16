@@ -1,0 +1,48 @@
+---
+title: "Unit 3 - Numerics and Monte Carlo"
+execute:
+    error: true # Allow errors
+    echo: true
+    enabled: true
+    daemon: 300
+engine: julia
+julia:
+    exeflags: ["--project=@.", "--threads=1"]
+    author: 
+        - "Aapeli Vuorinen"
+        - "Yoni Nazarathy"
+format:
+  html:
+    include-in-header:
+        text: |
+            QQQQ-some-style-stuff-here-with-css-QQQ
+    include-before-body:
+        text: |
+            QQQQ-some-image-logo-withAP-logo-and maybe AIMS-QQQQ
+    self-contained-math: true
+    anchor-sections: true
+    theme: default
+    toc: true
+    toc-depth: 4
+    toc-expand: 2
+    toc-location: left
+    toc-title: Contents
+    number-sections: true
+    number-depth: 3
+    code-summary: Show/Hide Code
+    code-tools:
+        caption: Download tutorial
+        source: true
+bibliography: references.bib
+fig-format: svg
+fig-width: 8
+fig-height: 6
+---
+
+# Differential Equations
+
+# Linear Algebra
+
+# Probability Distributions
+
+# Automatic Differentiation
