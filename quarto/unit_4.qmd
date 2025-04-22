@@ -20,7 +20,7 @@ format:
                 </h1>
                 <p> 
                     This an <a href="https://www.accumulationpoint.com/">Accumulation Point</a> workshop for 
-                    <a href="https://www.aims.gov.au/">AIMS</a>, delivered by during June, 2025.
+                    <a href="https://www.aims.gov.au/">AIMS</a>, delivered during June, 2025.
                 <p>
                     See workshop materials at the (private) AIMS 
                     <a href="https://github.com/open-AIMS/Julia_ML_training">GitHub repo</a>.

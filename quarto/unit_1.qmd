@@ -20,7 +20,7 @@ format:
                 </h1>
                 <p> 
                     This an <a href="https://www.accumulationpoint.com/">Accumulation Point</a> workshop for 
-                    <a href="https://www.aims.gov.au/">AIMS</a>, delivered by during June, 2025.
+                    <a href="https://www.aims.gov.au/">AIMS</a>, delivered during June, 2025.
                 <p>
                     See workshop materials at the (private) AIMS 
                     <a href="https://github.com/open-AIMS/Julia_ML_training">GitHub repo</a>.
@@ -62,7 +62,11 @@ fig-width: 8
 fig-height: 6
 ---
 
-# Story: Finding the max (loops, functions, variables, plotting)
+# Installation
+
+QQQQ - install instructions here - QQQQ
+
+# First steps: Finding the max (loops, functions, variables, plotting)
 
 ```{julia}
 using Random
@@ -175,6 +179,18 @@ println("log(100) + γ =  $(approx_h(100)), Monte Carlo Estimate: $(mean(records
 histogram(records,ticks = 1:maximum(records),normed=true,xlabel="n",ylabel="probability",legend=false)
 ```
 
+# About Julia
+
+* Compiled
+* LLVM
+* Two language problem
+* History
+* ...
+* Julia Discourse 
+* Julia slack
+
+JuliaUp
+
 # Where to run Julia
 
 * Shell
@@ -184,6 +200,11 @@ histogram(records,ticks = 1:maximum(records),normed=true,xlabel="n",ylabel="prob
 * Pluto
 * Quarto
 * Weave (legacy)
+
+# The Package Manager
+
+* REPL via `]`
+* The `Pkg` package
 
 # Story: Computing Square Roots (multiple dispatch, types, LLVM)
 
@@ -256,6 +277,11 @@ But how is such an algorithm implemented? In Julia's source code, in [`math.jl`]
 end
 ```
 
+
+```{julia}
+@code_lowered sqrt(2.5)
+```
+
 Here `sqrt_llvm()` compiles to [Low Level Virtual Machine(LLVM)](https://en.wikipedia.org/wiki/LLVM), so while many functions in Julia are actually implemented in Julia, with square roots it is better to let the underlying low level (LLVM) code handle square roots because it is later changed to assembly code; which is very fast. You can inspect this via the macros `@code_llvm` and `@code_native`.  
 
 This will generally look the same on different computer types (LLVM is hardware agnostic):
@@ -313,22 +339,7 @@ $$
 x_{k+1} = x_k - \frac{x_k^2-z}{2 x_k} = \frac{x_k}{2} + \frac{z}{2x_k} = \frac{1}{2}\Big(x_k+\frac{z}{x_k}\Big).
 $$
 
-Sometimes we are not just interested in computing the $\sqrt{z}$, but rather,
 
-$$
-\frac{1}{\sqrt{z}}.
-$$
-
-A common case for that is when we have a vector, say $u = [u_1, u_2]$ and we wish to create the normalized (unit $L_2$ norm) vector,
-
-$$
-\overline{u} = \frac{1}{\|u\|} u = \frac{1}{\sqrt{u_1^2 + u_2^2}} u.
-$$
-
-# The Package Manager
-
-* REPL via `]`
-* The `Pkg` package
 
 # Story: Computing Factorials (special functions, big numbers, more on types)
 
