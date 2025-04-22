@@ -28,11 +28,11 @@ format:
                 <center>
                     <p> 
                         |
-                        <a href = "URL-unit-1"> Unit 3 </a> 
+                        <a href = "URL-unit-1"> Unit 1 </a> 
+                        |
+                        <a href = "URL-unit-2"> Unit 2 </a>
                         |
                         <a href = "URL-unit-3"> Unit 3 </a>
-                        |
-                        <a href = "URL-unit-3"> Unit 4 </a>
                         |
                         <b> Unit 4 </b> 
                         |
