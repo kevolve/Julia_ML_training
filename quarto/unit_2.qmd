@@ -28,15 +28,15 @@ format:
                 <center>
                     <p> 
                         |
-                        <a href = "URL-unit-1"> Unit 1 </a>
+                        <a href = "unit_1.html"> Unit 1 </a>
                         |
                         <b> Unit 2 </b> 
                         |
-                        <a href = "URL-unit-3"> Unit 3 </a> 
+                        <a href = "unit_3.html"> Unit 3 </a> 
                         |
-                        <a href = "URL-unit-4"> Unit 4 </a> 
+                        <a href = "unit_4.html"> Unit 4 </a> 
                         |
-                        <a href = "URL-unit-5"> Unit 5 </a> 
+                        <a href = "unit_5.html"> Unit 5 </a> 
                         |
                     </p>
                 </center>
@@ -54,7 +54,7 @@ format:
     number-depth: 3
     code-summary: Show/Hide Code
     code-tools:
-        caption: Download tutorial
+        caption: Download unit source
         source: true
 bibliography: references.bib
 fig-format: svg
