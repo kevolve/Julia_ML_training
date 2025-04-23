@@ -1,0 +1,60 @@
+
+execute:
+    error: true # Allow errors
+    echo: true
+    enabled: true
+    daemon: 300
+julia:
+    exeflags: ["--project=@.", "--threads=1"]
+    author: 
+        - "Aapeli Vuorinen"
+        - "Yoni Nazarathy"
+format:
+  html:
+    include-in-header:
+        text: |
+              <div style="max-width: 1368px; margin: 0 auto;padding:20px">
+                <img style="display: inline-block; max-height: 50px; margin: 0px 20px;" src="https://www.accumulationpoint.com/assets/accumulation-point.svg" alt="Accumulation Point" />
+                <img style="display: inline-block; max-height: 50px; margin: 0px 20px;" src="https://www.aims.gov.au/themes/custom/aims_refresh/assets/images/logos/logo.svg" />
+                <img style="display: inline-block; max-height: 50px; margin: 0px 20px;" src="https://julialang.org/assets/infra/logo.svg" />
+                <h1>A Crash Course on the Julia Language and Ecosystem</h1>
+                <p>An <a href="https://www.accumulationpoint.com/">Accumulation Point</a> workshop for 
+                    <a href="https://www.aims.gov.au/">AIMS</a>, delivered during June, 2025.
+                  See workshop materials in the (private) AIMS 
+                    <a href="https://github.com/open-AIMS/Julia_ML_training">GitHub repo</a>.
+                </p>
+                <center>
+                    <p>
+                        <!--<b> Unit 1 </b> -->
+                        <a href="unit_1.html" style="display: inline-block; padding: 5px 10px">Unit 1</a> 
+                        |
+                        <a href="unit_2.html" style="display: inline-block; padding: 5px 10px">Unit 2</a> 
+                        |
+                        <a href="unit_3.html" style="display: inline-block; padding: 5px 10px">Unit 3</a> 
+                        |
+                        <a href="unit_4.html" style="display: inline-block; padding: 5px 10px">Unit 4</a> 
+                        |
+                        <a href="unit_5.html" style="display: inline-block; padding: 5px 10px">Unit 5</a> 
+                    </p>
+                </center>
+              </div>
+    include-before-body:
+        text: |
+    self-contained-math: true
+    anchor-sections: true
+    theme: default
+    toc: true
+    toc-depth: 4
+    toc-expand: 2
+    toc-location: left
+    toc-title: Contents
+    number-sections: true
+    number-depth: 3
+    code-summary: Show/Hide Code
+    code-tools:
+        caption: Download unit source
+        source: true
+bibliography: references.bib
+fig-format: svg
+fig-width: 8
+fig-height: 6

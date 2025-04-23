@@ -1,65 +1,6 @@
 ---
 title: "Unit 1 - Your first day with the Julia language"
-execute:
-    error: true # Allow errors
-    echo: true
-    enabled: true
-    daemon: 300
 engine: julia
-julia:
-    exeflags: ["--project=@.", "--threads=1"]
-    author: 
-        - "Aapeli Vuorinen"
-        - "Yoni Nazarathy"
-format:
-  html:
-    include-in-header:
-        text: |
-                <h1> 
-                    A Crash Course on the Julia Language and Ecosystem
-                </h1>
-                <p> 
-                    This an <a href="https://www.accumulationpoint.com/">Accumulation Point</a> workshop for 
-                    <a href="https://www.aims.gov.au/">AIMS</a>, delivered by during June, 2025.
-                <p>
-                    See workshop materials at the (private) AIMS 
-                    <a href="https://github.com/open-AIMS/Julia_ML_training">GitHub repo</a>.
-                </p>
-                <center>
-                    <p> 
-                        |
-                        <b> Unit 1 </b> 
-                        |
-                        <a href = "unit_2.html"> Unit 2 </a> 
-                        |
-                        <a href = "unit_3.html"> Unit 3 </a> 
-                        |
-                        <a href = "unit_4.html"> Unit 4 </a> 
-                        |
-                        <a href = "unit_5.html"> Unit 5 </a> 
-                        |
-                    </p>
-                </center>
-    include-before-body:
-        text: |
-    self-contained-math: true
-    anchor-sections: true
-    theme: default
-    toc: true
-    toc-depth: 4
-    toc-expand: 2
-    toc-location: left
-    toc-title: Contents
-    number-sections: true
-    number-depth: 3
-    code-summary: Show/Hide Code
-    code-tools:
-        caption: Download unit source
-        source: true
-bibliography: references.bib
-fig-format: svg
-fig-width: 8
-fig-height: 6
 ---
 
 # Story: Finding the max (loops, functions, variables, plotting)
@@ -184,6 +125,21 @@ histogram(records,ticks = 1:maximum(records),normed=true,xlabel="n",ylabel="prob
 * Pluto
 * Quarto
 * Weave (legacy)
+
+# The Package Manager
+
+* REPL via `]`
+* The `Pkg` package
+
+## Environment/package management in Julia
+
+Python <> Julia correspondence?
+
+`julia --project` OR `julia` then `]` then `activate .`
+
+Then `instantiate` to do `pip install -r requirements.txt` but it's better
+
+`source venv/bin/active && pip install -r requirements.txt` <> `julia --project > ] > instantiate`
 
 # Story: Computing Square Roots (multiple dispatch, types, LLVM)
 
@@ -325,10 +281,7 @@ $$
 \overline{u} = \frac{1}{\|u\|} u = \frac{1}{\sqrt{u_1^2 + u_2^2}} u.
 $$
 
-# The Package Manager
 
-* REPL via `]`
-* The `Pkg` package
 
 # Story: Computing Factorials (special functions, big numbers, more on types)
 

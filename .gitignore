@@ -26,3 +26,5 @@ Manifest.toml
 # Quarto outputs
 *.html
 unit_*_files/
+
+/.quarto/
