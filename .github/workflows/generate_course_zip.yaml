@@ -1,14 +1,10 @@
 name: Generate course material archive
 
-on:
-  push:
-  workflow_dispatch:
+on: [push, workflow_dispatch]
 
 jobs:
   build:
-    runs-on:
-      - platform: linux/amd64
-        runner: ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Set up Julia
         uses: julia-actions/setup-julia@v2
