@@ -5,7 +5,38 @@ engine: julia
 
 # Installation
 
-QQQQ - install instructions here - QQQQ
+The recommended way to install Julia is using [JuliaUp](https://github.com/JuliaLang/juliaup).
+This is a program that allows you to keep multiple Julia versions on your system, and also helps update to newer versions as these become available.
+Do not confuse this with the [package manager](https://docs.julialang.org/en/v1/stdlib/Pkg/), which is used to install packages within Julia. 
+
+For this course it is also recommended to install [Visual Studio Code](https://code.visualstudio.com/download), and the [Julia plugin for Visual Studio Code](https://www.julia-vscode.org/).
+Afterwards, it is also recommended to add a few packages to your Julia base environment.
+These are [IJulia.jl](https://github.com/JuliaLang/IJulia.jl) for running Julia in [Jupyter](https://jupyter.org/),
+[Pluto.jl](https://github.com/fonsp/Pluto.jl) to try out [Pluto notebooks](https://plutojl.org/), [QuartoNotebookRunner.jl](https://github.com/PumasAI/QuartoNotebookRunner.jl) which integrates with [Quarto](https://quarto.org/) to create or update these notes,
+and [Revise.jl](https://github.com/timholy/Revise.jl) which helps with development. 
+
+Finally, you may also want to clone/zip-download this repo and instantiate a (Julia) environment for each unit of the course (we'll walk you through those steps soon).
+
+In summary to install Julia and the supporting software, follow these steps (skip any steps in case you already have this installed).
+
+1. Install Julia (and JuliaUp). Follow the instructions in ths [Official Julia install page](https://julialang.org/install/). You'll basically run a shell script (Mac/Linux) or use the Microsoft store on windows. Once installed, `juliaup` and `julia` should be in your terminal path. Then try,
+a. In the terminal run `juliaup` and you should see a short help listing.
+a. In the terminal try `julia` in the command line and you should enter the Julia REPL (Read Evaluate Print Loop). You should see a prompt, `julia> ` and try `1+1` and hit ENTER. To exit hit Ctrl+D, or `exit()` followed by ENTER. 
+Note that this course was created with Julia version 1.11.5.
+You can see the version of Julia that you are running when you first run Julia, or by running `versioninfo()` in the Julia REPL.
+2. If you don't have it installed, install [Visual Studio Code](https://code.visualstudio.com/download).
+3. Install the  [Julia plugin for Visual Studio Code](https://www.julia-vscode.org/). See instructions [here](https://www.julia-vscode.org/docs/dev/gettingstarted/#Installing-the-Julia-extension).
+4. Install Julia packages to your base environment. For this you have options 1 and 2. Option I: You can do this for each of the packages using the package manager, and this can be good practice. Option II: you can run a Julia script we provide for that.
+
+Option I:  
+
+a. Run `julia` and enter the package manager mode by hitting `]`. You should see the prompt change to `(@vX.X) pkg>` where X.X is the julia version you have installed. 
+b. Type `up` and ENTER to update the list of available packages from the registry.
+c. Type `add IJulia` and ENTER to install IJulia.jl. 
+d. Similarly `add Pluto` to install Pluto.jl. 
+e. Similarly `add QuartoNotebookRunner` to install QuartoNotebookRunner.jl. In each case you can use TAB to autocomplete (or hit TAB twice to see options).
+f. Similarly `add Revise`
+
 
 # First steps: Finding the max (loops, functions, variables, plotting)
 
