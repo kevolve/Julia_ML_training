@@ -44,7 +44,7 @@ format:
     anchor-sections: true
     theme: default
     toc: true
-    toc-depth: 4
+    toc-depth: 1
     toc-expand: 2
     toc-location: left
     toc-title: Contents

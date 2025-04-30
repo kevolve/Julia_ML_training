@@ -37,12 +37,20 @@ You can see the version of Julia that you are running when you first run Julia, 
 
 # First steps: Finding the max (loops, functions, variables, plotting)
 
+Let's dive directly into some code. Here you can see:
+
+* Using a Julia package with the `using` keyword. In this case, the `Random` package is one of the standard library packages that come with Julia. 
+* Creation of a function, using the `function` keyword, and returning a result with `return` keyword.
+* A `for` loop.
+* A conditional (`if`) statement.
+* A few more language artifacts. 
+
 ```{julia}
 using Random
 
 function find_max(data)
     max_value = -Inf
-    for x in data
+    for x ∈ data # Get ∈ by typing \in + [TAB]. Could have just used `in` as well
         if x > max_value
             max_value = x
         end
@@ -56,31 +64,43 @@ max_value = find_max(data)
 println("Found maximal value: $(max_value)")
 ```
 
-```{julia}
-using Random
+Note: You rarely need to implement such elementary functions, since most are obviously supplied with the language. For example:
 
+```{julia}
+maximum(data)
+```
+
+You can get help for this function as others by typing `? maximum` in the REPL or Jupyter. 
+
+Related in-built functions that may be of interest are `findmax`, `argmax`, and `max`. Similarly the same functions with `min` in place of max (`minimum`, `findmin`, `argmin`, and `min`). There is also `minmax`, and `extrema`. Look at the help for some of these functions and try some of the examples.  
+
+## Some fun probability
+
+When we scan for the maximum, let's see how many times we get a new maximum.
+
+```{julia}
 function find_max(data)
     max_value = -Inf
     n = 0
     for x in data
         if x > max_value
-            n = n+1
+            n += 1
             max_value = x
         end
     end
-    return max_value, n
+    return max_value, n # Returns a tuple
 end
 
-Random.seed!(0)
-data = rand(100)
 max_value, n = find_max(data)
 println("Found maximal value: $(max_value)")
 println("There were $n records along the way.")
 ```
 
-How many on average? Denote the number of records for $n$ data points by $X_n$ then,
+**If the data is i.i.d., how many on average?**
+
+Denote the number of records for $n$ data points by $X_n$ then,
 $$
-X_n = I_1 + I_2 + \ldots + I_n,
+X_n = I_1 + I_2 + \ldots + I_n
 $$
 where,
 $$
@@ -98,8 +118,6 @@ Observe that ${\mathbb E}[I_i] = {\mathbb P}(I_i = 1)$ and for statistically ind
 $$
 {\mathbb P}(I_i = 1) = \frac{1}{i},
 $$
-why? 
-
 Hence,
 $$
 {\mathbb E}[X_n] = h_n = \sum_{i=1}^n \frac{1}{i},
@@ -112,41 +130,63 @@ where $\gamma$ is the [Euler–Mascheroni constant](https://en.wikipedia.org/wik
 $$
 h_n \approx \log(n) + \gamma.
 $$
+
+## Experimenting
+
+
 Let's see it...
 ```{julia}
-using Plots
-
 println("γ = ",Float64(MathConstants.γ))  #\gamma + [TAB]
+println()
 
+#These are one-line function definitions
 h(n) = sum(1/i for i in 1:n)
 approx_h(n) = log(n) + MathConstants.γ
 
 for n in 1:10
-    println(n, "\t", h(n), "\t", approx_h(n) )
+    println(n, "\t", round(h(n), digits = 4), "\t", round(approx_h(n), digits = 4) )
 end
 
-err = [h(n) - approx_h(n) for n in 1:20]
 
-scatter(1:20,err,xticks=1:20,xlabel="n",ylabel = "Error",ylim = (0,0.5), legend=false)
 ```
 
-Here is a Monte Carlo estimate and a histogram of the distribution:
+Let's plot the error of the approximation as $n$ grows.
+
+```{julia}
+using Plots
+err = [h(n) - approx_h(n) for n in 1:20] # This is a comprehension
+scatter(1:20, err, xticks=1:20, 
+        xlabel="n", ylabel = "Error", ylim = (0,0.5), legend=false)
+```
+
+
+Let's verify via a Monte Carlo simulation and also estimate the distribution:
 
 ```{julia}
 using Statistics
 
 records = []
 
-for s in 1:10^5
+data_n = 10^2
+num_sims = 10^5
+
+for s in 1:num_sims
     Random.seed!(s)
-    data = rand(100)
+    data = rand(data_n)
     _, n = find_max(data)
     push!(records,n)
 end
-println("log(100) + γ =  $(approx_h(100)), Monte Carlo Estimate: $(mean(records))")
 
-histogram(records,ticks = 1:maximum(records),normed=true,xlabel="n",ylabel="probability",legend=false)
+approx_value = approx_h(data_n)
+mc_value = mean(records)
+
+println("log($data_n) + γ =  $(approx_value), Monte Carlo Estimate: $(mc_value)")
+
+histogram(records, xticks = 1:maximum(records), nbins = maximum(records), 
+                normed=true, xlabel="Num Records", ylabel="Probability", legend=false)
 ```
+
+
 
 # About Julia
 
