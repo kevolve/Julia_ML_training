@@ -54,7 +54,7 @@ format:
     code-tools:
         caption: Download unit source
         source: true
-bibliography: references.bib
+bibliography: ../references.bib
 fig-format: svg
 fig-width: 8
 fig-height: 6
