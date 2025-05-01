@@ -186,19 +186,53 @@ histogram(records, xticks = 1:maximum(records), nbins = maximum(records),
                 normed=true, xlabel="Num Records", ylabel="Probability", legend=false)
 ```
 
-
-
 # About Julia
 
-* Compiled
-* LLVM
-* Two language problem
-* History
-* ...
-* Julia Discourse 
-* Julia slack
+- **Origins and History**
+  - Julia was conceived in 2009 by Jeff Bezanson, Stefan Karpinski, Viral B. Shah, and Alan Edelman.
+  - First publicly released in 2012, with the promise to be “as fast as C, as easy as Python, as flexible as Ruby, and as powerful for statistics as R.”
+  - Born out of dissatisfaction with existing technical computing languages for scientific and numerical computing.
 
-JuliaUp
+- **Core Idea**
+  - Designed for high-performance numerical and scientific computing.
+  - Combines the ease of use of dynamic languages (like Python or R) with performance close to statically-typed, compiled languages (like C and Fortran).
+  - Uses Just-In-Time (JIT) compilation via LLVM, meaning code is compiled to efficient machine code at runtime.
+
+- **Key Benefits**
+  - **Speed:** Approaches or matches C/Fortran in performance for many tasks.
+  - **Multiple Dispatch:** Allows defining function behavior across combinations of argument types, enabling more expressive and extensible code.
+  - **Rich Ecosystem:** Growing collection of packages for data science, machine learning, optimization, and visualization.
+  - **Easy Syntax:** Friendly to users familiar with Python, MATLAB, or R.
+  - **Metaprogramming:** Powerful features like macros for generating and transforming code.
+  - **Native Parallelism:** Designed with parallel and distributed computing in mind from the start.
+  - **Interoperability:** Easily calls C, Fortran, and Python libraries for leveraging existing codebases.
+
+## Key Julia "Communities"
+
+**Where to get help**
+
+* [The Julia Language Slack](https://julialang.org/slack/)
+* [Julia Discourse](https://discourse.julialang.org/)
+
+**Special Domains:**
+
+* Operations Research: [JUMP](https://jump.dev/)
+* Scientific Machine Learning: [SciML](https://sciml.ai/)
+* Statistics: [Julia Statistics](https://github.com/JuliaStats)
+* Machine Learning: [Julia ML](https://juliaml.github.io/)
+* Climate modelling: [CliMA](https://clima.caltech.edu/)
+* GPUs: [JuliaGPU](https://juliagpu.org/)
+
+**Companies:**
+
+* JuliaHub (used to be "Julia Computing"): [juliahub.com](https://juliahub.com/)
+* PumasAI: [pumas.ai](https://pumas.ai/)
+* Fugro Roames: [case study](https://juliahub.com/industries/case-studies/fugro-roames-ml)
+
+**Books:**
+
+* [Algorithms for Optimization](https://mitpress.mit.edu/9780262039420/algorithms-for-optimization/) by Mykel J. Kochenderfer and Tim A. Wheeler.
+* [Statistics with Julia](https://statisticswithjulia.org/) by Yoni Nazarathy and Hayden Klok.
 
 # Where to run Julia
 
