@@ -236,13 +236,107 @@ histogram(records, xticks = 1:maximum(records), nbins = maximum(records),
 
 # Where to run Julia
 
-* Shell
-* REPL
-* VS-CODE
-* Jupyter
-* Pluto
-* Quarto
-* Weave (legacy)
+## Shell
+
+```
+shell> echo "println(\"Hello world!\")" > temp.jl
+shell> julia temp.jl
+Hello world
+```
+
+Try `julia --help` to see options. 
+
+## The REPL (Read Evaluate Print Loop)
+
+```
+shell> julia
+               _
+   _       _ _(_)_     |  Documentation: https://docs.julialang.org
+  (_)     | (_) (_)    |
+   _ _   _| |_  __ _   |  Type "?" for help, "]?" for Pkg help.
+  | | | | | | |/ _` |  |
+  | | |_| | | | (_| |  |  Version 1.11.5 (2025-04-14)
+ _/ |\__'_|_|_|\__'_|  |  Official https://julialang.org/ release
+|__/                   |
+
+julia> 
+```
+
+At the prompt:
+* Hitting `]` changes to package manager mode. 
+* Hitting `;` changes to shell mode.
+* Hitting `?` changes to help mode.
+* Hitting `BACKSPACE` changes back to `julia>` mode.
+
+Useful function for running code: `include`. Try: `include("temp.jl")`. Related are the `using` and `import` keywords.
+
+## Visual Studio Code
+
+The Julia extension makes VS-Code IDE (integrated development environment). Not quite R-Studio, but close.
+
+- **Syntax highlighting:** Provides rich syntax highlighting for Julia code.
+- **Code completion:** Offers IntelliSense, code completion, and signature help.
+- **Integrated REPL:** Launch and interact with a Julia REPL directly in VS Code.
+- **Debugger support:** Includes a full-featured debugger with breakpoints, stepping, and variable inspection. Not commonly used.
+- **Plot pane:** View plots and figures inline within the VS Code editor.
+- **Dataframe preview:** View dataframes (tables).
+- **Workspace view:** Explore variables, data, and modules in your current environment.
+- **Environment/project integration:** Works seamlessly with Julia’s package and environment management.
+- **Notebook support:** Compatible with Jupyter notebooks via the VS Code Jupyter extension.
+- **Hover/documentation:** View function/type docs and use jump-to-definition.
+- **Actively maintained:** The extension is regularly updated and supported by the Julia community.
+
+**Shortcuts:**
+
+QQQQ-check these shortcuts
+
+- **Start Julia REPL:** `Ctrl+Shift+P` → type and select `Julia: Start REPL`
+- **Execute active file in REPL:** `Ctrl+Shift+P` → type and select `Julia: Execute File in REPL`
+- **Send code to REPL:** `Shift+Enter`
+- **Execute cell or selected lines:** `Alt+Enter`
+- **Go to definition:** `F12`
+- **Find references:** `Shift+F12`
+- **Show documentation (hover):** `Ctrl+K Ctrl+I` (or just hover cursor over symbol)
+- **Run code cell above/below:** `Ctrl+Alt+Up` / `Ctrl+Alt+Down`
+- **Set breakpoint (in debug mode):** `F9`
+- **Step over (in debug mode):** `F10`
+- **Step into (in debug mode):** `F11`
+- **Continue (in debug mode):** `F5`
+
+## Jupyter
+
+This is standard machine learning way of exploring and communicating ideas. 
+The 'J' in "Jupyter" actually stands for "Julia". 
+But the Julia community uses Jupyter a bit less (yet the course instructors are certainly avid users).
+
+## Pluto.jl
+
+While both Pluto.jl and Jupyter are interactive notebook environments for Julia, Pluto.jl is fundamentally reactive—changing a variable or a cell instantly updates all dependent cells throughout the notebook, ensuring consistency and minimizing hidden state issues. In contrast, Jupyter notebooks execute cells in the order chosen by the user, which can sometimes lead to hard-to-debug inconsistencies if cells are run out of order. Pluto notebooks have a more streamlined, Julia-specific design and promote reproducibility by making cell dependencies explicit, whereas Jupyter offers broader language support and a larger ecosystem of extensions but does not provide the same level of reactive interactivity or strict cell dependency mapping as Pluto.jl.
+
+There was even a conference! [PlutoCon2021](https://plutojl.org/plutocon2021/).
+
+```
+julia> using Pluto
+┌ Info: 
+│   Welcome to Pluto v0.20.8 🎈
+│   Start a notebook server using:
+│ 
+│ julia> Pluto.run()
+│ 
+│   Have a look at the FAQ:
+│   https://github.com/fonsp/Pluto.jl/wiki
+└ 
+```
+
+## Quarto
+
+A modern R-markdown style environment. Used to make this course!  Has good Julia integration. See for example [Pumas Tutorials](https://tutorials.pumas.ai/) that make extensive use of Quarto.
+
+A legacy related framework is [Weave.jl](https://github.com/JunoLab/Weave.jl).
+
+## Integrations
+
+Integrations within Python and R. See below.
 
 # The Package Manager
 
