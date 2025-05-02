@@ -39,18 +39,18 @@ You can see the version of Julia that you are running when you first run Julia, 
 
 Let's dive directly into some code. Here you can see:
 
-* Using a Julia package with the `using` keyword. In this case, the `Random` package is one of the standard library packages that come with Julia. 
-* Creation of a function, using the `function` keyword, and returning a result with `return` keyword.
+* Using a Julia package with the `using` keyword. In this case, we use the `Random` package: one of the standard library packages (that come with Julia).
+* Creation of a function, with the `function` keyword, and returning a result with the `return` keyword.
 * A `for` loop.
 * A conditional (`if`) statement.
-* A few more language artifacts. 
+* A few more language features. 
 
 ```{julia}
 using Random
 
 function find_max(data)
     max_value = -Inf
-    for x ∈ data # Get ∈ by typing \in + [TAB]. Could have just used `in` as well
+    for x ∈ data # You cna type ∈ by typing \in + [TAB]. Could have just used `in` as well
         if x > max_value
             max_value = x
         end
@@ -64,19 +64,19 @@ max_value = find_max(data)
 println("Found maximal value: $(max_value)")
 ```
 
-Note: You rarely need to implement such elementary functions, since most are obviously supplied with the language. For example:
+You of course don't need to implement such elementary functions, since most are supplied with the language, for example:
 
 ```{julia}
 maximum(data)
 ```
 
-You can get help for this function as others by typing `? maximum` in the REPL or Jupyter. 
+You can get help for a function by typing `? maximum` in the REPL or in Jupyter. 
 
-Related in-built functions that may be of interest are `findmax`, `argmax`, and `max`. Similarly the same functions with `min` in place of max (`minimum`, `findmin`, `argmin`, and `min`). There is also `minmax`, and `extrema`. Look at the help for some of these functions and try some of the examples.  
+Related built-in functions that may be of interest are `findmax`, `argmax`, and `max`. Similarly there are counterparts for `min` in place of max (`minimum`, `findmin`, `argmin`, and `min`). There is also `minmax`, and `extrema`. Look at the help for some of these functions and try some of the examples.  
 
 ## Some fun probability
 
-When we scan for the maximum, let's see how many times we get a new maximum.
+Let's see how many times we get a new record when we scan for the maximum.
 
 ```{julia}
 function find_max(data)
@@ -96,7 +96,7 @@ println("Found maximal value: $(max_value)")
 println("There were $n records along the way.")
 ```
 
-**If the data is i.i.d., how many on average?**
+**If the data is i.i.d., how many times does this happen on average?**
 
 Denote the number of records for $n$ data points by $X_n$ then,
 $$
@@ -106,7 +106,7 @@ where,
 $$
 I_i =
 \begin{cases}
-1 & \text{if}~i~\text{'th data point is a record}, \\
+1 & \text{if the}~i~\text{-th data point is a record}, \\
 0 & \text{otherwise}.
 \end{cases}
 $$
@@ -136,10 +136,10 @@ $$
 
 Let's see it...
 ```{julia}
-println("γ = ",Float64(MathConstants.γ))  #\gamma + [TAB]
+println("γ = ",Float64(MathConstants.γ))  # \gamma + [TAB]
 println()
 
-#These are one-line function definitions
+# These are one-line function definitions
 h(n) = sum(1/i for i in 1:n)
 approx_h(n) = log(n) + MathConstants.γ
 
