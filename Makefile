@@ -8,20 +8,20 @@ course:
 
 .PHONY: u1
 u1:
-	quarto render quarto/unit1/unit_1.qmd
+	quarto render unit1/unit_1.qmd
 
 .PHONY: u2
 u2:
-	quarto render quarto/unit2/unit_2.qmd
+	quarto render unit2/unit_2.qmd
 
 .PHONY: u3
 u3:
-	quarto render quarto/unit3/unit_3.qmd
+	quarto render unit3/unit_3.qmd
 
 .PHONY: u4
 u4:
-	quarto render quarto/unit4/unit_4.qmd
+	quarto render unit4/unit_4.qmd
 
 .PHONY: u5
 u5:
-	quarto render quarto/unit5/unit_5.qmd
+	quarto render unit5/unit_5.qmd

@@ -26,15 +26,15 @@ format:
                 <center>
                     <p>
                         <!--<b> Unit 1 </b> -->
-                        <a href="unit_1.html" style="display: inline-block; padding: 5px 10px">Unit 1</a> 
+                        <a href="unit1/unit_1.html" style="display: inline-block; padding: 5px 10px">Unit 1</a> 
                         |
-                        <a href="unit_2.html" style="display: inline-block; padding: 5px 10px">Unit 2</a> 
+                        <a href="unit2/unit_2.html" style="display: inline-block; padding: 5px 10px">Unit 2</a> 
                         |
-                        <a href="unit_3.html" style="display: inline-block; padding: 5px 10px">Unit 3</a> 
+                        <a href="unit3/unit_3.html" style="display: inline-block; padding: 5px 10px">Unit 3</a> 
                         |
-                        <a href="unit_4.html" style="display: inline-block; padding: 5px 10px">Unit 4</a> 
+                        <a href="unit4/unit_4.html" style="display: inline-block; padding: 5px 10px">Unit 4</a> 
                         |
-                        <a href="unit_5.html" style="display: inline-block; padding: 5px 10px">Unit 5</a> 
+                        <a href="unit5/unit_5.html" style="display: inline-block; padding: 5px 10px">Unit 5</a> 
                     </p>
                 </center>
               </div>
