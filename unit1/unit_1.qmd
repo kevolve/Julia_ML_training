@@ -355,16 +355,16 @@ Then `instantiate` to do `pip install -r requirements.txt` but it's better
 
 # Story: Computing Square Roots (multiple dispatch, types, LLVM)
 
-* Basics
-* Variables (also complex types)
-* Types (basic story about types)
-* Many methods for the one function
-* The Babylonian algorithm 
-* Broadcasting as well
-* The "quakeIII" algorithm for the reciprocal of square root Float32 
+The `sqrt` function. 
 
 ```{julia}
 sqrt(25)
+```
+
+Cal also use an alias for `sqrt`:
+
+```{julia}
+√25 #\sqrt + [TAB]
 ```
 
 ```{julia}
@@ -375,18 +375,23 @@ x = sqrt(2f0) #32 bit float (Float32)
 @show x, x^2
 ```
 
+What if we try $\sqrt{-1}$?
+
 ```{julia}
 sqrt(-1)
 ```
 
+But if we give a complex type as input:
+
 ```{julia}
 sqrt(Complex(-1))
 ```
-```{julia}
-√2 #\sqrt + [TAB]
-```
 
-In Julia a function (such as `sqrt` or its alias `√`) can have many methods:
+In Julia a **function** (such as `sqrt` or its alias `√`) can have **many methods**:
+
+```{julia}
+methods(sqrt)
+```
 
 ```{julia}
 using InteractiveUtils
@@ -408,14 +413,12 @@ data = [i^2 for i in 0:10]
 sqrt.(data) # The "." broadcating operator
 ```
 
-How can we compute the square root if we didn't have the `sqrt()` function? Of course one answer is to use another in-built alternative:
-
 ```{julia}
 x = 36
 @show x^0.5
 ```
 
-But how is such an algorithm implemented? In Julia's source code, in [`math.jl`](https://github.com/JuliaLang/julia/blob/master/base/math.jl) you'll find the following in lines 566-569:
+In Julia's source code, in [`math.jl`](https://github.com/JuliaLang/julia/blob/7b64cec5385d9099762ad7449c340eaac4fccb41/base/math.jl#L626) you'll find the following in lines 626-629:
 
 ```
 @inline function sqrt(x::Union{Float32,Float64})
@@ -474,6 +477,8 @@ bs, s = bab_sqrt(5000;verbose = true), sqrt(5000)
 println("Babylonian:\t$bs\nSystem:\t\t$s")
 ```
 
+## Newton's method
+
 We can view the ancient Babylonian method as an application of the more general [Newton's method](https://en.wikipedia.org/wiki/Newton%27s_method) for solving equations. Our goal is to solve $x^2 = z$ where $z$ is given and $x$ is desired. That is define $f(x) = x^2 - z$ and we wish to find the solution of $f(x) = 0$. Newton's method iterates,
 
 $$
@@ -486,7 +491,72 @@ $$
 x_{k+1} = x_k - \frac{x_k^2-z}{2 x_k} = \frac{x_k}{2} + \frac{z}{2x_k} = \frac{1}{2}\Big(x_k+\frac{z}{x_k}\Big).
 $$
 
+```{julia}
+function newton(f, x_0::Real, der_f; ε = 10e-5, maxiter = 100) #\varepsilon
+    x = x_0
+    x_prev = x + 2ε
+    iter = 0
+    while abs(x-x_prev) ≥ ε #\ge
+        x_prev = x
+        x = x - f(x)/der_f(x)
+        iter += 1
+        if iter == maxiter 
+            @info "Maximal number of iterations reached"
+            break
+        end
+    end
+    return x
+end
 
+my_root2 = newton((x)->(x^2 - 2), 3, (x)->2x)
+@show my_root2
+@show √2
+√2 ≈ my_root2  #\approx
+```
+
+What if we don't (easily) know the derivative?
+```{julia}
+f(x) = sqrt(log(sin(exp(cos((x/5)^2)*log(x/5)+x^7))) + 1)-1/2
+plot(f,xlim=(0.95,1.05), xlabel = "x", ylabel="f(x)", label=false)
+```
+
+Let's use automatic differentiation (see for example Section 4.4 [here](https://deeplearningmath.org/)).
+
+```{julia}
+using ForwardDiff: derivative
+auto_der = derivative(f, 0.95)
+
+h_val = 0.0001
+numer_der = (f(0.95+h_val) - f(0.95-h_val))/(2h_val)
+auto_der, numer_der
+```
+
+```{julia}
+function newton(f, 
+                x_0::Real, 
+                der_f  = (x)->derivative(f, x); 
+                ε = 10e-8, 
+                maxiter = 100)
+    x = x_0
+    x_prev = x + 2ε
+    iter = 0
+    while abs(x-x_prev) ≥ ε
+        x_prev = x
+        x = x - f(x)/der_f(x)
+        iter += 1
+        if iter == maxiter 
+            @info "Maximal number of iterations reached"
+            break
+        end
+    end
+    return x
+end
+
+root_point = newton(f,0.95)
+println("Found root: $root_point")
+plot(f,xlim=(0.95,1.05), xlabel = "x", ylabel="f(x)", label=false)
+scatter!([root_point], [0], color=:red, marker=:circle, label="Root found")
+```
 
 # Story: Computing Factorials (special functions, big numbers, more on types)
 
