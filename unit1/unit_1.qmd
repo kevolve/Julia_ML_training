@@ -1122,3 +1122,43 @@ You've now seen _every possible concrete type_ and _every possible abstract type
 
 # Integrating with R and Python
 
+In general, Python and R, are each more popular than Julia. Python dominates the machine learning world as well as many other fields. R dominates the statistical analysis world. Yet, packages in both of these languages of rely on low level languages for efficient computation.
+
+In some instances Julia may play a role as such a "low level" languages, and one can consider creating packages in Julia and wrapping them in Python and R. This is the case with Julia's famous [DifferentialEquations.jl](https://github.com/SciML/DifferentialEquations.jl) package. In R it is wrapped with [diffeqr](https://github.com/SciML/diffeqr) and in Python with [diffeqpy](https://github.com/SciML/diffeqpy). 
+
+QQQQ-diffeqr- example - QQQQQ
+
+QQQQ-diffeqpy- example - QQQQQ
+
+Considering the wrapping code in both these cases is instructive. QQQQ-Links-QQQQ. Let's now see how to carry integrations for ad-hoc purposes. 
+
+## Integration with R
+
+Let's start with an R wrapper of a Julia package: (diffeqr)[https://github.com/SciML/diffeqr]. This wrap's J
+
+QQQQ - Example
+
+### JuliaCall example in R
+
+The main tool to invoke Julia from R is the `JuliaCall` R package. See it on [CRAN](https://cran.r-project.org/web/packages/JuliaCall/index.html).
+
+QQQQ - Example
+
+### RCall.jl example in Julia
+
+In Julia the main tool is [RCall.jl](https://github.com/JuliaInterop/RCall.jl).
+
+QQQQ - Example
+
+## Integration with Python
+
+For Python integration both tools exist together in [PythonCall.jl](https://github.com/JuliaPy/PythonCall.jl).
+This gives the Python package, `juliacall` and the Julia package, `PythonCall.jl`.
+
+### JuliaCall example in Python
+
+QQQQ - Example
+
+### PythonCall example in Julia
+
+QQQQ - Example
