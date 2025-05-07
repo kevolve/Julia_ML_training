@@ -32,5 +32,5 @@ jobs:
         with:
           name: course-html
           path: |
-            quarto/*.html
-            quarto/unit_*_files/**/*
+            quarto/unit/*/unit_*.html
+            quarto/unit*/unit_*_files/**/*
