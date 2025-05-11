@@ -5,8 +5,816 @@ engine: julia
 
 # Differential Equations
 
+```{julia}
+using DifferentialEquations, LinearAlgebra, Plots
+
+k, b, M = 1.2, 0.3, 2.0
+A = [0 1;
+    -k/M -b/M]
+
+initX = [8., 0.0]
+tEnd = 50.0
+tRange = 0:0.1:tEnd
+
+manualSol = [exp(A*t)*initX for t in tRange]
+
+linearRHS(x,Amat,t) = Amat*x
+prob = ODEProblem(linearRHS, initX, (0,tEnd), A)
+sol = solve(prob)
+
+p1 = plot(first.(manualSol), last.(manualSol),
+	c=:blue, label="Manual trajectory")
+p1 = scatter!(first.(sol.u), last.(sol.u),
+	c=:red, ms = 5, msw=0, label="DiffEq package")
+p1 = scatter!([initX[1]], [initX[2]],
+	c=:black, ms=10, label="Initial state",	xlims=(-7,9), ylims=(-9,7),
+	ratio=:equal, xlabel="Displacement", ylabel="Velocity")
+p2 = plot(tRange, first.(manualSol),
+	c=:blue, label="Manual trajectory")
+p2 = scatter!(sol.t, first.(sol.u),
+	c=:red, ms = 5, msw=0, label="DiffEq package")
+p2 = scatter!([0], [initX[1]],
+	c=:black, ms=10, label="Initial state", xlabel="Time",
+	ylabel="Displacement")
+plot(p1, p2, size=(800,400), legend=:topright)
+```
+
+```{julia}
+using DifferentialEquations, Plots
+
+beta, delta, gamma = 0.25, 0.2, 0.1
+initialInfect = 0.025
+println("R0 = ", beta/gamma)
+
+initX = [1-initialInfect, 0.0, initialInfect, 0.0]
+tEnd = 100.0
+
+RHS(x,parms,t) = [  -beta*x[1]*x[3],
+                    beta*x[1]*x[3] - delta*x[2],
+                    delta*x[2] - gamma*x[3],
+                    gamma*x[3] ]
+
+prob = ODEProblem(RHS, initX, (0,tEnd), 0)
+sol = solve(prob)
+println("Final infected proportion= ", sol.u[end][4])
+
+plot(sol.t,((x)->x[1]).(sol.u),label = "Susceptible", c=:green)
+plot!(sol.t,((x)->x[2]).(sol.u),label = "Exposed", c=:blue)
+plot!(sol.t,((x)->x[3]).(sol.u),label = "Infected", c=:red)
+plot!(sol.t,((x)->x[4]).(sol.u),label = "Removed", c=:yellow,
+    xlabel = "Time", ylabel = "Proportion",legend = :top)
+```
+
+```{julia}
+using Distributions, Random, Plots
+Random.seed!(0)
+
+beta, delta, gamma = 0.25, 0.4, 0.1
+initialInfect = 0.025
+M = 1000
+I0 = Int(floor(initialInfect*M))
+N = 30
+
+function simulateSIRDoobGillespie(beta,delta,gamma,I0,M,T)
+    t, S, E, I, R = 0.0, M-I0, 0, I0, 0
+    tValues, sValues, eValues, iValues, rValues = [0.0], [S], [E], [I], [R]
+    while t<T
+        infectionRate = beta*I*S
+        symptomRate = delta*E
+        removalRate = gamma*I
+        totalRate = infectionRate + symptomRate + removalRate
+        probs = [infectionRate, symptomRate, removalRate]/totalRate
+        t += rand(Exponential(1/(totalRate)))
+        u = rand()
+        if u < probs[1]
+            S -= 1; E += 1
+        elseif u < probs[1] + probs[2]
+            E -=1; I+=1
+        else
+            I -= 1; R += 1
+        end
+        push!(tValues,t)
+        push!(sValues,S);push!(eValues,E);push!(iValues,I);push!(rValues,R)
+        I == 0 && break
+    end
+    return [tValues, sValues, eValues, iValues, rValues]
+end
+
+tV,sV,eV,iV,rV = simulateSIRDoobGillespie(beta/M,delta,gamma,I0,M,Inf)
+lastT = tV[end]
+
+finals = [simulateSIRDoobGillespie(beta/M,delta,gamma,I0,M,Inf)[5][end] 
+                for _ in 1:N]/M
+
+p1 = plot(tV,sV/M,label = "Susceptible", c=:green)
+plot!(tV,eV/M,label = "Exposed", c=:blue)
+plot!(tV,iV/M,label = "Infected",c=:red)
+plot!(tV,rV/M,label = "Removed", c=:yellow,
+    xlabel = "Time", ylabel = "Proportion",
+    legend = :topleft, xlim = (0,lastT*1.05))
+scatter!(lastT*1.025*ones(N),finals, c = :yellow,label= "Final Infected")
+```
+
 # Linear Algebra
 
+```{julia}
+using BenchmarkTools
+
+function sum_rows(data, n, m)
+    s = zero(eltype(data))
+    for i in 1:n
+        for j in 1:m
+            s += data[i,j]
+        end
+    end
+    return s
+end
+function sum_columns(data, n, m)
+    s = zero(eltype(data))
+    for j in 1:m
+        for i in 1:n
+            s += data[i,j]
+        end
+    end
+    return s
+end
+using Random
+Random.seed!(0)
+n, m = 500, 10^6
+data = rand(n,m)
+#dry run for precompilation
+sum_columns(data, n, m)
+sum_rows(data, n, m)
+println("Summing with the column iteration moving fastest")
+@btime sum_columns(data, n, m)
+println("Summing with the row iteration moving fastest")
+@btime sum_rows(data, n, m);
+```
+
+
+```{julia}
+using DataFrames, GLM, Statistics, LinearAlgebra, CSV
+data = CSV.read("../data/L1L2data.csv")
+xVals, yVals = data[:,1], data[:,2]
+n = length(xVals)
+A = [ones(n) xVals]
+
+# Approach A
+xBar, yBar = mean(xVals),mean(yVals)
+sXX, sXY = ones(n)'*(xVals.-xBar).^2 , dot(xVals.-xBar,yVals.-yBar)
+b1A = sXY/sXX
+b0A = yBar - b1A*xBar
+
+# Approach B
+b1B = cor(xVals,yVals)*(std(yVals)/std(xVals))
+b0B = yBar - b1B*xBar
+
+# Approach C
+b0C, b1C = A'A \ A'yVals
+
+# Approach D
+Adag = inv(A'*A)*A'
+b0D, b1D = Adag*yVals
+
+# Approach E
+b0E, b1E = pinv(A)*yVals
+
+# Approach F
+b0F, b1F = A\yVals
+
+# Approach G
+F = qr(A)
+Q, R = F.Q, F.R
+b0G, b1G = (inv(R)*Q')*yVals
+
+# Approach H
+F = svd(A)
+V, Sp, Us = F.V, Diagonal(1 ./ F.S), F.U'
+b0H, b1H = (V*Sp*Us)*yVals
+
+# Approach I
+eta, eps = 0.002, 10^-6.
+b, bPrev = [0,0], [1,1]
+while norm(bPrev-b) >= eps
+    global bPrev = b
+    global b = b - eta*2*A'*(A*b - yVals)
+end
+b0I, b1I = b[1], b[2]
+
+# Approach J
+modelJ = lm(@formula(Y ~ X), data)
+b0J, b1J = coef(modelJ)
+
+# Approach K
+modelK = glm(@formula(Y ~ X), data, Normal())
+b0K, b1K = coef(modelK)
+println(round.([b0A,b0B,b0C,b0D,b0E,b0F,b0G,b0H,b0I,b0J,b0K],digits=3))
+println(round.([b1A,b1B,b1C,b1D,b1E,b1F,b1G,b1H,b1I,b1J,b1K],digits=3))
+```
+
+# Monte Carlo
+
+```{julia}
+using Plots, Random, Measures
+
+function path(rng::AbstractRNG, α::Real, n::Int=5000)
+    x = 0.0
+    y = 0.0
+    xDat = Float64[]
+    yDat = Float64[]
+
+    for _ in 1:n
+        # random walk
+        flip = rand(rng, 1:4)
+        if flip == 1 # left
+            x += 1
+        elseif flip == 2 # up
+            y += 1
+        elseif flip == 3 # right
+            x -= 1
+        elseif flip == 4 # down
+            y -= 1
+        end
+
+        # bias toward upper-right
+        x += α
+        y += α
+
+        # add the result to the output
+        push!(xDat, x)
+        push!(yDat, y)
+    end
+    return (xDat, yDat)
+end
+
+alpha_range = [0.0, 0.002, 0.004]
+args = (xlabel = "x", ylabel = "y", xlims=(-150, 150), ylims=(-150, 150))
+
+#Plot runs with same random numbers (common random numbers)\
+p1 = plot(path(Xoshiro(27), alpha_range[1]), c = :blue, label = "α=$(alpha_range[1])")
+p1 = plot!(path(Xoshiro(27), alpha_range[2]), c = :red, label = "α=$(alpha_range[2])")
+p1 = plot!(path(Xoshiro(27), alpha_range[3]), c = :green, label = "α=$(alpha_range[3])", title = "Same seed", legend = :topright; args...) 
+
+#Plot runs with different random numbers
+rng = Xoshiro(27)
+p2 = plot(path(rng, alpha_range[1]), c = :blue, label = "α=$(alpha_range[1])")
+p2 = plot!(path(rng, alpha_range[2]), c = :red, label = "α=$(alpha_range[2])")
+p2 = plot!(path(rng, alpha_range[3]), c = :green, label = "α=$(alpha_range[3])", title = "Different seeds", legend = :topright; args...) 
+
+plot(p1, p2, size=(800, 400), margin=5mm)
+```
+
+```{julia}
+using Distributions, Random, Plots, LaTeXStrings
+
+N, K, M = 10^2, 50, 10^3
+lamRange = 0.01:0.01:0.99
+
+prn(lambda,rng) = quantile(Poisson(lambda),rand(rng))
+zDist(lam) = Uniform(0,2*(1-lam))
+
+rv(lam,rng) = sum([rand(rng,zDist(lam)) for _ in 1:prn(K*lam,rng)])
+rv2(lam,rng1,rng2) = sum([rand(rng1,zDist(lam)) for _ in 1:prn(K*lam,rng2)])
+
+mEst(lam,rng) = mean([rv(lam,rng) for _ in 1:N])
+mEst2(lam,rng1,rng2) = mean([rv2(lam,rng1,rng2) for _ in 1:N])
+
+function mGraph0(seed)
+    singleRng = MersenneTwister(seed)
+    [mEst(lam,singleRng) for lam in lamRange]
+end
+mGraph1(seed) = [mEst(lam,MersenneTwister(seed)) for lam in lamRange]
+mGraph2(seed1,seed2) = [mEst2(lam,MersenneTwister(seed1),
+		MersenneTwister(seed2)) for lam in lamRange]
+
+argMaxLam(graph) = lamRange[findmax(graph)[2]]
+
+std0 = std([argMaxLam(mGraph0(seed)) for seed in 1:M])
+std1 = std([argMaxLam(mGraph1(seed)) for seed in 1:M])
+std2 = std([argMaxLam(mGraph2(seed,seed+M)) for seed in 1:M])
+
+println("Standard deviation with no CRN: ", std0)
+println("Standard deviation with CRN and single RNG: ", std1)
+println("Standard deviation with CRN and two RNGs: ", std2)
+
+plot(lamRange,mGraph0(1987),
+	c=:red, label="No CRN")
+plot!(lamRange,mGraph1(1987),
+	c=:green, label="CRN and one RNG")
+plot!(lamRange,mGraph2(1987,1988),
+	c=:blue, label="CRN and two RNG's", xlims=(0,1),ylims=(0,14),
+    xlabel=L"\lambda", ylabel = "Mean")
+```
+
+```{julia}
+using LightGraphs, Distributions, StatsBase, Random, Plots, LaTeXStrings;pyplot()
+Random.seed!(0)
+
+function createNetwork(edges)
+    network = Graph(maximum(maximum.(edges)))
+    for e in edges
+        add_edge!(network, e[1], e[2])
+    end
+    network
+end
+
+function uniformRandomEdge(network)
+    outDegrees = length.(network.fadjlist)
+    randI = sample(1:length(outDegrees),Weights(outDegrees))
+    randJ = rand(network.fadjlist[randI])
+    randI, randJ
+end
+
+function networkLife(network,source,dest,lambda)
+    failureNetwork = copy(network)
+    t = 0
+    while has_path(failureNetwork, source, dest)
+        t += rand(Exponential(1/(failureNetwork.ne*lambda)))
+        i, j = uniformRandomEdge(failureNetwork)
+        rem_edge!(failureNetwork, i, j)
+    end
+    t
+end
+
+lambda1, lambda2 = 0.5, 1.0
+roads = [(1,2), (1,3), (2,4), (2,5), (2,3), (3,4), (3,5), (4,5), (4,6), (5,6)]
+source, dest = 1, 6
+network = createNetwork(roads)
+N = 10^6
+
+failTimes1 = [ networkLife(network,source,dest,lambda1) for _ in 1:N ]
+failTimes2 = [ networkLife(network,source,dest,lambda2) for _ in 1:N ]
+
+println("Edge Failure Rate = $(lambda1): Mean failure time = ",
+	mean(failTimes1), " days.")
+println("Edge Failure Rate = $(lambda2): Mean failure time = ",
+	mean(failTimes2), " days.")
+
+stephist(failTimes1, bins=200, c=:blue, normed=true, label=L"\lambda=0.5")
+stephist!(failTimes2, bins=200, c=:red, normed=true, label=L"\lambda=1.0", 
+    xlims=(0,5), ylims=(0,1.1), xlabel="Network Life Time", ylabel = "Density")
+```
+
+### A Structured Discrete Event Simulator
+
+```{julia}
+using DataStructures
+import Base: isless
+
+abstract type Event end
+abstract type State end
+
+# Captures an event and the time it takes place
+struct TimedEvent
+    event::Event
+    time::Float64
+end
+
+# Comparison of two timed events - this will allow us to use them in a heap/priority-queue
+isless(te1::TimedEvent, te2::TimedEvent) = te1.time < te2.time
+
+"""
+    new_timed_events = process_event(time, state, event)
+
+Process an `event` at a given `time`, which may read and write to the system `state`. An event
+may generate new events, returned as an array of 0 or more new `TimedEvent`s.
+"""
+function process_event end # This defines a function with zero methods (to be added later)
+
+# Generic events that we can always use
+
+"""
+    EndSimEvent()
+
+Return an event that ends the simulation.
+"""
+struct EndSimEvent <: Event end
+
+function process_event(time::Float64, state::State, es_event::EndSimEvent)
+    println("Ending simulation at time $time.")
+    return []
+end
+
+"""
+    LogStateEvent()
+
+Return an event that prints a log of the current simulation state.
+"""
+struct LogStateEvent <: Event end
+
+function process_event(time::Float64, state::State, ls_event::LogStateEvent)
+    println("Logging state at time $time:")
+    println(state)
+    return []
+end
+```
+
+```{julia}
+"""
+The main simulation function gets an initial state and an initial event
+that gets things going. Optional arguments are the maximal time for the
+simulation, times for logging events, and a call-back function.
+"""
+function simulate(init_state::State, init_timed_event::TimedEvent
+                    ; 
+                    max_time::Float64 = 10.0, 
+                    log_times::Vector{Float64} = Float64[],
+                    callback = (time, state) -> nothing)
+
+    # The event queue
+    priority_queue = BinaryMinHeap{TimedEvent}()
+
+    # Put the standard events in the queue
+    push!(priority_queue, init_timed_event)
+    push!(priority_queue, TimedEvent(EndSimEvent(), max_time))
+    for log_time in log_times
+        push!(priority_queue, TimedEvent(LogStateEvent(), log_time))
+    end
+
+    # initialize the state
+    state = deepcopy(init_state)
+    time = 0.0
+
+    # Callback at simulation start
+    callback(time, state)
+
+    # The main discrete event simulation loop - SIMPLE!
+    while true
+        # Get the next event
+        timed_event = pop!(priority_queue)
+
+        # Advance the time
+        time = timed_event.time
+
+        # Act on the event
+        new_timed_events = process_event(time, state, timed_event.event) 
+
+        # If the event was an end of simulation then stop
+        if timed_event.event isa EndSimEvent
+            break 
+        end
+
+        # The event may spawn 0 or more events which we put in the priority queue 
+        for nte in new_timed_events
+            push!(priority_queue,nte)
+        end
+
+        # Callback for each simulation event
+        callback(time, state)
+    end
+end;
+```
+
+```{julia}
+using Distributions, Random
+Random.seed!(0)
+
+λ = 1.8
+μ = 2.0
+ 
+mutable struct QueueState <: State
+    number_in_system::Int # If ≥ 1 then server is busy, If = 0 server is idle.
+end
+
+struct ArrivalEvent <: Event end
+struct EndOfServiceEvent <: Event end
+
+# Process an arrival event
+function process_event(time::Float64, state::State, ::ArrivalEvent)
+    # Increase number in system
+    state.number_in_system += 1
+    new_timed_events = TimedEvent[]
+
+    # Prepare next arrival
+    push!(new_timed_events,TimedEvent(ArrivalEvent(),time + rand(Exponential(1/λ))))
+
+    # If this is the only job on the server
+    state.number_in_system == 1 && push!(new_timed_events,TimedEvent(EndOfServiceEvent(), time + 1/μ))
+    return new_timed_events
+end
+
+# Process an end of service event 
+function process_event(time::Float64, state::State, ::EndOfServiceEvent)
+    # Release a customer from the system
+    state.number_in_system -= 1 
+    @assert state.number_in_system ≥ 0
+    return state.number_in_system ≥ 1 ? [TimedEvent(EndOfServiceEvent(), time + 1/μ)] : TimedEvent[]
+end
+
+simulate(QueueState(0), TimedEvent(ArrivalEvent(),0.0), log_times = [5.3,7.5])
+```
+
+
+```{julia}
+"""
+This function is designed to stitch_steps of a discrete event curve.
+"""
+function stitch_steps(epochs, values)
+    n = length(epochs)
+    new_epochs  = [epochs[1]]
+    new_values = [values[1]]
+    for i in 2:n
+        push!(new_epochs, epochs[i])
+        push!(new_values, values[i-1])
+        push!(new_epochs, epochs[i])
+        push!(new_values, values[i])
+    end
+    return (new_epochs, new_values)
+end
+```
+
+```{julia}
+using Plots
+Random.seed!(0)
+
+time_traj, queue_traj = Float64[], Int[]
+
+function record_trajectory(time::Float64, state::QueueState) 
+    push!(time_traj, time)
+    push!(queue_traj, state.number_in_system)
+    return nothing
+end
+
+simulate(QueueState(0), TimedEvent(ArrivalEvent(),0.0), max_time = 100.0, callback = record_trajectory)
+
+plot(stitch_steps(time_traj, queue_traj)... ,
+             label = false, xlabel = "Time", ylabel = "Queue size (number in system)" )
+```
+
+
+```{julia}
+Random.seed!(0)
+
+λ = 1.8
+μ = 2.0
+
+prev_time = 0.0
+prev_state = 0
+integral = 0.0
+
+function add_to_integral(time::Float64, state::QueueState) 
+    # Make sure to use the variables above
+    global prev_time, prev_state, integral
+
+    diff = time - prev_time
+    integral += prev_state * diff
+    prev_time = time
+    prev_state = state.number_in_system
+
+    return nothing
+end
+
+simulate(QueueState(0), TimedEvent(ArrivalEvent(),0.0), max_time = 10.0^6, callback = add_to_integral)
+println("Simulated mean queue length: ", integral / 10^6 )
+
+ρ = λ / μ
+md1_theory = ρ/(1-ρ)*(2-ρ)/2
+println("Theoretical mean queue length: ", md1_theory)
+```
+
+# Some more graphics
+
+```{julia}
+using Distributions, LinearAlgebra, LaTeXStrings, Random, Plots
+Random.seed!(1)
+
+N = 10^5
+
+SigY = [ 6 4 ;
+         4 9]
+muY = [15 ; 
+       20]
+A = cholesky(SigY).L
+
+rngGens = [()->rand(Normal()), 
+           ()->rand(Uniform(-sqrt(3),sqrt(3))),
+           ()->rand(Exponential())-1]
+
+rv(rg) = A*[rg(),rg()] + muY
+    
+data = [[rv(r) for _ in 1:N] for r in rngGens]
+
+stats(data) = begin
+    data1, data2 = first.(data),last.(data)
+    println(round(mean(data1),digits=2), "\t",round(mean(data2),digits=2),"\t",
+            round(var(data1),digits=2), "\t", round(var(data2),digits=2), "\t",
+            round(cov(data1,data2),digits=2))
+end
+
+println("Mean1\tMean2\tVar1\tVar2\tCov")
+for d in data
+    stats(d)
+end
+
+scatter(first.(data[1]), last.(data[1]), c=:blue, ms=1, msw=0, label="Normal")
+scatter!(first.(data[2]), last.(data[2]), c=:red, ms=1, msw=0, label="Uniform")
+scatter!(first.(data[3]),last.(data[3]),c=:green, ms=1,msw=0,label="Exponential",
+	xlims=(0,40), ylims=(0,40), legend=:bottomright, ratio=:equal,
+    xlabel=L"X_1", ylabel=L"X_2")
+```
+
+```{julia}
+using Plots
+
+function graphCreator(n::Int)
+    vertices = 1:n
+    complexPts = [exp(2*pi*im*k/n) for k in vertices]
+    coords = [(real(p),imag(p)) for p in complexPts]
+    xPts = first.(coords)
+    yPts = last.(coords)
+    edges = []
+    for v in vertices, u in (v+1):n
+        push!(edges,(v,u)) 
+    end
+
+    anim = Animation()
+    scatter(xPts, yPts, c=:blue, msw=0, ratio=1, 
+        xlims=(-1.5,1.5), ylims=(-1.5,1.5), legend=:none)
+
+    for i in 1:length(edges)
+        u, v = edges[i][1], edges[i][2]
+        xpoints = [xPts[u], xPts[v]]
+        ypoints = [yPts[u], yPts[v]]
+        plot!(xpoints, ypoints, line=(:red))
+        frame(anim)
+    end
+
+    gif(anim, "graph.gif", fps = 60)
+end
+
+graphCreator(16)
+```
+
+```{julia}
+using DataFrames, CSV, Statistics, Dates, Plots, Measures
+
+resp = HTTP.request("GET","https://raw.githubusercontent.com/h-Klok/StatsWithJuliaBook/master/data/temperatures.csv")
+data = CSV.read(IOBuffer(String(resp.body)), DataFrame)
+
+brisbane = data.Brisbane
+goldcoast = data.GoldCoast
+
+diff = brisbane - goldcoast
+dates = [Date(
+            Year(data.Year[i]), 
+            Month(data.Month[i]), 
+            Day(data.Day[i])
+        ) for i in 1:nrow(data)]
+
+fortnightRange = 250:263
+brisFortnight = brisbane[fortnightRange]
+goldFortnight = goldcoast[fortnightRange]
+
+p1 = plot(dates, [brisbane goldcoast], label=["Brisbane" "Gold Coast"], 
+    c=[:blue :red], xlabel="Time", ylabel="Temperature")
+p2 = plot(dates[fortnightRange], [brisFortnight goldFortnight], label=["Brisbane" "Gold Coast"], 
+        c=[:blue :red], m=(:dot, 5, Plots.stroke(1)), xlabel="Time", ylabel="Temperature")
+p3 = plot(dates, diff, c=:black, ylabel="Temperature Difference",legend=false)
+p4 = histogram(diff, bins=-4:0.5:6, 
+        ylims=(0,140), legend = false,
+        xlabel="Temperature Difference", ylabel="Frequency")
+plot(p1,p2,p3,p4, size = (800,500), margin = 5mm)
+```
+
+```{julia}
+using Plots, LaTeXStrings, Measures
+
+f(x,y) = x^2 + y^2
+f0(x) = f(x,0)
+f2(x) = f(x,2)
+
+xVals, yVals = -5:0.1:5 , -5:0.1:5
+plot(xVals, [f0.(xVals), f2.(xVals)], 
+	c=[:blue :red], xlims=(-5,5), legend=:top,
+	ylims=(-5,25), ylabel=L"f(x,\cdot)", label=[L"f(x,0)" L"f(x,2)"])
+p1 = annotate!(0, -0.2, text("(0,0) The minimum\n of f(x,0)", :left, :top, 10))
+
+z = [ f(x,y) for y in yVals, x in xVals ]
+p2 = surface(xVals, yVals, z, c=cgrad([:blue, :red]),legend=:none, 
+	ylabel="y", zlabel=L"f(x,y)")
+
+M = z[1:10,1:10]
+p3 = heatmap(M, c=cgrad([:blue, :red]), yflip=true, ylabel="y",  
+	xticks=([1:10;], xVals), yticks=([1:10;], yVals))
+
+plot(p1, p2, p3, layout=(1,3), size=(1200,400), xlabel="x", margin=5mm)
+```
+
 # Probability Distributions
+
+```{julia}
+using Distributions
+dists = [
+    Uniform(10,20),
+    Exponential(3.5),
+    Gamma(0.5,7),
+    Beta(10,0.5),
+    Weibull(10,0.5),
+    Normal(20,3.5),
+    Rayleigh(2.4),
+    Cauchy(20,3.5)]
+
+println("Distribution \t\t\t Parameters \t Support")
+reshape([dists ;  params.(dists) ;
+		((d)->(minimum(d),maximum(d))).(dists) ],
+		length(dists),3)
+```
+
+```{julia}
+using Distributions
+dists = [
+    DiscreteUniform(10,20),
+    Binomial(10,0.5),
+    Geometric(0.5),
+    NegativeBinomial(10,0.5),
+    Hypergeometric(30, 40, 10),
+    Poisson(5.5)]
+
+println("Distribution \t\t\t\t\t\t Parameters \t Support")
+reshape([dists ;  params.(dists) ;
+		((d)->(minimum(d),maximum(d))).(dists) ],
+		length(dists),3)
+```
+
+```{julia}
+using Distributions, Plots
+
+L, K, n  = 500, [450, 400, 250, 100, 50], 30
+hyperDists = [Hypergeometric(k,L-k,n) for k in K]
+xGrid = 0:1:n
+pmfs = [ pdf.(dist, xGrid) for dist in hyperDists ]
+labels = "Successes = " .* string.(K)
+
+bar( xGrid, pmfs, 
+	alpha=0.8, c=[:orange :purple :green :red :blue ],
+	label=hcat(labels...), ylims=(0,0.25),
+	xlabel="x", ylabel="Probability", legend=:top)
+```
+
+```{julia}
+using SpecialFunctions, Distributions
+
+a,b = 0.2, 0.7
+x = 0.75
+
+betaAB1 = beta(a,b)
+betaAB2 = (gamma(a)gamma(b))/gamma(a+b)
+betaAB3 = (factorial(a-1)factorial(b-1))/factorial(a+b-1)
+betaPDFAB1 = pdf(Beta(a,b),x)
+betaPDFAB2 = (1/beta(a,b))*x^(a-1) * (1-x)^(b-1)
+
+println("beta($a,$b)    = $betaAB1,\t$betaAB2,\t$betaAB3 ")
+println("betaPDF($a,$b) at $x = $betaPDFAB1,\t$betaPDFAB2")
+```
+
+```{julia}
+using StatsBase, Distributions, Plots
+
+lambda, N = 1, 10^6
+xGrid = 0:6
+
+expDist = Exponential(1/lambda)
+floorData = counts(convert.(Int,floor.(rand(expDist,N))), xGrid)/N
+geomDist = Geometric(1-MathConstants.e^-lambda)
+
+plot( xGrid, floorData, 
+	line=:stem, marker=:circle, 
+	c=:blue, ms=10, msw=0, lw=4, 
+	label="Floor of Exponential")
+plot!( xGrid, pdf.(geomDist,xGrid), 
+	line=:stem, marker=:xcross, 
+	c=:red, ms=6, msw=0, lw=2, 
+	label="Geometric", ylims=(0,1), 
+	xlabel="x", ylabel="Probability")
+```
+
+```{julia}
+using Distributions, Plots, LaTeXStrings
+
+alphas = [0.5, 1.5, 1]
+lam = 2
+
+lambda(dist::Weibull) = shape(dist)*scale(dist)^(-shape(dist))
+theta(lam,alpha) = (alpha/lam)^(1/alpha)
+
+dists = [Weibull.(a,theta(lam,a)) for a in alphas]
+
+hA(dist,x) = pdf(dist,x)/ccdf(dist,x)
+hB(dist,x) = lambda(dist)*x^(shape(dist)-1)
+
+xGrid = 0.01:0.01:10
+hazardsA = [hA.(d,xGrid) for d in dists]
+hazardsB = [hB.(d,xGrid) for d in dists]
+
+println("Maximum difference between two implementations of hazard: ", 
+    maximum(maximum.(hazardsA-hazardsB)))
+
+Cl = [:blue :red :green]
+Lb = [L"\lambda=" * string(lambda(d)) * ",   " * L"\alpha =" * string(shape(d)) 
+        for d in dists]
+
+plot(xGrid, hazardsA, c=Cl, label=reshape(Lb, 1,:), xlabel="x",
+	ylabel="Instantaneous failure rate", xlims=(0,10), ylims=(0,10))
+```
 
 # Automatic Differentiation
