@@ -62,7 +62,7 @@ jobs:
 
       - name: Generate Tag Name (Today's Date)
         id: generate_tag
-        run: echo "TAG_NAME=$(date +'%Y.%m.%d')" >> $GITHUB_OUTPUT
+        run: echo "TAG_NAME=$(date +'%Y.%m.%d')-$(git rev-list --count "origin/main")" >> $GITHUB_OUTPUT
 
       - name: Check if tag already exists
         id: check_tag

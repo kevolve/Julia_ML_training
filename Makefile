@@ -3,7 +3,7 @@ course: u1 u2 u3 u4 u5
 
 .PHONY: u1
 u1:
-	quarto render unit1/unit_1.qmd
+	cd unit1 && julia --project=. -e 'using Pkg; Pkg.activate("."); Pkg.instantiate()' && cd .. && quarto render unit1/unit_1.qmd
 
 .PHONY: u2
 u2:
