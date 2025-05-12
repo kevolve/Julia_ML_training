@@ -3,12 +3,123 @@ title: "Unit 2 - Processing Data"
 engine: julia
 ---
 
-# Dataframes and CSV Files - Intro
+# Basic data structures
+
+## Dictionaries
+
+```{julia}
+pop = Dict()
+pop["Australia"] = 27_809_000
+pop["United States"] = 340_110_988
+pop["Finland"] = 5_700_000
+
+pop
+```
+
+
+```{julia}
+strict_pop = Dict{String,Int}()
+strict_pop["Australia"] = 27_809_000
+strict_pop["United States"] = 340_110_988
+strict_pop["Finland"] = 5_700_000
+
+strict_pop
+```
+
+
+```{julia}
+# this is okay
+pop["North Pole"] = 0.5
+# not okay
+strict_pop["North Pole"] = 0.5
+```
+
+todo(aapeli): more dict
+
+
+## Named tuples
+
+```{julia}
+my_stuff = (age=28, gender=:man, name="Aapeli")
+yonis_stuff = (age=51, gender=:man, name="Yoni")
+
+my_stuff.gender
+```
+
+
+```{julia}
+using Plots
+using LaTeXStrings
+
+# we can use named tuples to pass in keyword arguments
+args = (label=false, xlim=(-1,1), xlabel=L"x")
+# `...` is the "splat" operator, similar to `**args` in python
+p1 = plot(x->sin(1/x); ylabel=L"\sin(\frac{1}{x})", args...)
+p2 = plot(x->cos(1/x); ylabel=L"\cos(\frac{1}{x})", args...)
+plot(p1, p2, size=(700,300))
+```
+
+
+```{julia}
+using DataStructures
+
+# todo(aapeli): trie... etc
+```
+
+# Basic text processing
+
+* multiline
+* read shakespear
+* td-idf
+* parse, etc
+
+# Dataframes and CSV files - intro
+
+
+Brisbane speed camera locations
+
+```{julia}
+using HTTP
+using CSV
+using DataFrames
+
+response = HTTP.get("https://www.data.qld.gov.au/datastore/dump/f6b5c37e-de9d-4041-8c18-f4d4b6c593a8?bom=True")
+
+df = CSV.read(IOBuffer(response.body), DataFrame)
+
+first(df, 5)
+```
+
+```{julia}
+using SummaryTables
+
+simple_table(first(df, 5))
+```
+
+```{julia}
+# simple_table(df)
+```
+
+speed cameras by suburb vs 
+
+missing data:...
 
 # Dataframes - Transformations
 
-# Text Processing
+Pumas
 
-# JSON 
+# JSON
+
+```{julia}
+
+```
 
 # Serialization
+
+* struct (mutable & immutable)
+* write to file
+* read from file
+
+```{julia}
+
+```
