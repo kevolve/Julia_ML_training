@@ -95,7 +95,7 @@ jobs:
       - name: Zip the course material
         run: |
           cd ./course-material-for-release
-          zip -r ../course-material-${{ steps.generate_tag.outputs.TAG_NAME }}.zip .
+          zip -r ../aims-julia-training-accumulation-point.zip .
           cd ..
 
       - name: Create GitHub Release
@@ -107,8 +107,7 @@ jobs:
           tag_name: ${{ steps.generate_tag.outputs.TAG_NAME }}
           release_name: Course Material ${{ steps.generate_tag.outputs.TAG_NAME }}
           body: |
-            Automated release of course materials for version ${{ steps.generate_tag.outputs.TAG_NAME }}.
-            Contains the compiled HTML output.
+            Automated release of course materials from ${{ steps.generate_tag.outputs.TAG_NAME }}. Contains the compiled HTML output.
           draft: false
           prerelease: false
 
@@ -118,6 +117,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./course-material-${{ steps.generate_tag.outputs.TAG_NAME }}.zip
-          asset_name: course-material-${{ steps.generate_tag.outputs.TAG_NAME }}.zip
+          asset_path: ./aims-julia-training-accumulation-point.zip
+          asset_name: aims-julia-training-accumulation-point.zip
           asset_content_type: application/zip

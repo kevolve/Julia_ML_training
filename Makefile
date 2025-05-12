@@ -1,10 +1,5 @@
 .PHONY: course
-course:
-	make u1
-	make u2
-	make u3
-	make u4
-	make u5
+course: u1 u2 u3 u4 u5
 
 .PHONY: u1
 u1:
