@@ -1,10 +1,16 @@
-name: Generate course material archive
+name: Generate course material archive and Release
 
-on: [push, workflow_dispatch]
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      commit_sha: ${{ github.sha }}
     steps:
       - name: Set up Julia
         uses: julia-actions/setup-julia@v2
@@ -19,7 +25,7 @@ jobs:
         with:
           version: 1.7.28
 
-      - name: Checkout
+      - name: Checkout code for build
         uses: actions/checkout@v4
 
       - name: Build units
@@ -27,10 +33,91 @@ jobs:
           julia --project=. -e 'using Pkg; Pkg.activate("."); Pkg.instantiate()'
           make
 
-      - name: Archive artifacts
+      - name: Archive artifacts for release job
         uses: actions/upload-artifact@v4
         with:
-          name: course-html
+          name: course-html-artifact
           path: |
             quarto/unit/*/unit_*.html
             quarto/unit*/unit_*_files/**/*
+
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code for release
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.build.outputs.commit_sha }}
+          fetch-depth: 0
+
+      - name: Configure Git User
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "github-actions@github.com"
+
+      - name: Generate Tag Name (Today's Date)
+        id: generate_tag
+        run: echo "TAG_NAME=$(date +'%Y.%m.%d')" >> $GITHUB_OUTPUT
+
+      - name: Check if tag already exists
+        id: check_tag
+        run: |
+          NEW_TAG="${{ steps.generate_tag.outputs.TAG_NAME }}"
+          if git rev-parse "refs/tags/$NEW_TAG" >/dev/null 2>&1; then
+            echo "::error title=Tag Exists::Tag $NEW_TAG already exists. Cannot create a new release with this tag. Please choose a different tag name or delete the existing one if this is intentional."
+            exit 1
+          else
+            echo "Tag $NEW_TAG does not exist. Proceeding with tag creation."
+          fi
+
+      - name: Create and Push Tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NEW_TAG="${{ steps.generate_tag.outputs.TAG_NAME }}"
+          COMMIT_TO_TAG="${{ needs.build.outputs.commit_sha }}" # The commit built by the 'build' job
+          echo "Creating tag $NEW_TAG for commit $COMMIT_TO_TAG"
+          git tag "$NEW_TAG" "$COMMIT_TO_TAG"
+          echo "Pushing tag $NEW_TAG to remote repository"
+          git push origin "$NEW_TAG"
+
+      - name: Download course HTML artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: course-html-artifact
+          path: ./course-material-for-release
+
+      - name: Zip the course material
+        run: |
+          cd ./course-material-for-release
+          zip -r ../course-material-${{ steps.generate_tag.outputs.TAG_NAME }}.zip .
+          cd ..
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.generate_tag.outputs.TAG_NAME }}
+          release_name: Course Material ${{ steps.generate_tag.outputs.TAG_NAME }}
+          body: |
+            Automated release of course materials for version ${{ steps.generate_tag.outputs.TAG_NAME }}.
+            Contains the compiled HTML output.
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset (Zip file)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./course-material-${{ steps.generate_tag.outputs.TAG_NAME }}.zip
+          asset_name: course-material-${{ steps.generate_tag.outputs.TAG_NAME }}.zip
+          asset_content_type: application/zip
