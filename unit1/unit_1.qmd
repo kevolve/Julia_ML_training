@@ -219,7 +219,7 @@ histogram(records, xticks = 1:maximum(records), nbins = maximum(records),
 * Operations Research: [JUMP](https://jump.dev/)
 * Scientific Machine Learning: [SciML](https://sciml.ai/)
 * Statistics: [Julia Statistics](https://github.com/JuliaStats)
-* Machine Learning: [Julia ML](https://juliaml.github.io/)
+* Machine Learning: [Julia ML](https://juliaml.github.io/), [JuliaAI](https://github.com/JuliaAI)
 * Climate modelling: [CliMA](https://clima.caltech.edu/)
 * GPUs: [JuliaGPU](https://juliagpu.org/)
 
