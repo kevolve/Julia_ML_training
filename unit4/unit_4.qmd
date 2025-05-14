@@ -1,15 +1,92 @@
 ---
-title: "Unit 3 - Parallel and Fast"
+title: "Unit 4 - Parallel and Fast"
 engine: julia
 ---
 
 # Multi-threading
 
+## Example - Simple Number Theory Computation
+
+The [Goldbach Conjecture](https://en.wikipedia.org/wiki/Goldbach%27s_conjecture):
+
+```{julia}
+using BenchmarkTools
+using Plots
+
+function sieve_of_Eratosthenes(n)
+    primebits = ones(Bool,n) # Will contain true if the index is prime (initially all assumed prime)
+    primebits[1] = false # The number 1 is not prime
+    p = 2 # Smallest prime
+    @inbounds while p ≤ n
+        i = 2p
+        while i ≤ n  # \le +[TAB]
+            primebits[i] = false
+            i += p
+        end
+        p += 1
+        while p ≤ n && !primebits[p]
+            p += 1
+        end
+    end
+    return primebits
+end
+
+function check_Goldbachs_slow(n)
+    primebits = sieve_of_Eratosthenes(n)
+    primes = (1:n)[primebits]
+    out = zeros(Int, n)
+
+    for i in 2:2:n
+        for p in primes
+            if in(i - p, primes)
+                out[i] += 1
+            end
+        end
+    end
+    return out[2:2:n]
+end
+
+function check_Goldbachs(n::Integer)
+    # Below we are working in the subset of the numbers
+    # The primes we care about are odd numbers in the range 3:2:n
+    # The output are even numbers in the range 2:2:n
+
+    n_half = n >> 0x01
+    primebits = sieve_of_Eratosthenes(n)
+    @inbounds mask = primebits[3:2:n]
+    @inbounds primes = (Int32(1):Int32(n_half - 1))[mask] # not really the primes!
+
+    out = zeros(UInt16, n_half)
+    out[2] = 0x0001 # 4 is 2 + 2, and below we only deal with odd primes
+    @inbounds for x in primes
+        i_out = x + 2
+        for i_mask in 1:(n_half - x)
+            out[i_out] += mask[i_mask]
+            i_out += 1
+        end
+    end
+    return out
+end
+
+# Test the implementation
+@assert check_Goldbachs_slow(100) == check_Goldbachs(100)
+
+n = 10^4#1_000_000
+checks = @btime check_Goldbachs(n)
+
+scatter(2:2:n, checks, legend=false, xlabel="n", ylabel="Number of Goldbach pairs", markersize=0.1)
+```
+
+
 # Distributed computing
+
+* [Distributed.jl](https://github.com/JuliaLang/Distributed.jl)
 
 # GPUs
 
-# Example - Simple Number Theory Computation
+* [juliagpu.org](https://juliagpu.org/)
+* [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl)
+
 
 # Example - Differential Equations
 
