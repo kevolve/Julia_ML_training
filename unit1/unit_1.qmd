@@ -1045,7 +1045,7 @@ type_and_children(Number)
 
 In Julia, you can define abstract types with the `abstract type` keywords:
 
-```
+```{julia}; eval = false
 abstract type Number
 end
 
