@@ -1,0 +1,26 @@
+---
+title: "Julia Language Workshop by Accumulation Point"
+engine: julia
+bibliography: ./references.bib
+format:
+  html:
+    toc: false
+    include-before-body:
+        text: ""
+    code-tools:
+        source: false
+---
+
+Welcome to the AIMS Julia Language Workshop run by Accumulation Point.
+
+In this workshop, we will...
+
+
+
+| Session         | Material                    | Instructor(s) |
+|-----------------|-----------------------------|---------------|
+| Day 1 full day  | [Unit 1](unit1/unit_1.html) | Yoni & Aapeli |
+| Day 2 morning   | [Unit 2](unit2/unit_2.html) | Aapeli        |
+| Day 2 afternoon | [Unit 3](unit3/unit_3.html) | Yoni          |
+| Day 3 morning   | [Unit 4](unit4/unit_4.html) | Aapeli        |
+| Day 3 afternoon | [Unit 5](unit5/unit_5.html) | Yoni          |

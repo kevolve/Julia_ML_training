@@ -1,5 +1,9 @@
 .PHONY: course
-course: u1 u2 u3 u4 u5
+course: index u1 u2 u3 u4 u5
+
+.PHONY: index
+index:
+	quarto render index.qmd
 
 .PHONY: u1
 u1:

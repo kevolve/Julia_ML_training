@@ -145,3 +145,84 @@ Pumas
 ```{julia}
 
 ```
+
+
+```{julia}
+using Random
+
+Random.seed!(0)
+
+struct Node
+    id::UInt16
+    friends::Vector{Node}
+
+    # inner constructor, uses the default constructor
+    Node() = new(rand(UInt16), [])
+    # another inner constructor
+    Node(friend::Node) = new(rand(UInt16),[friend])
+end
+```
+
+```{julia}
+"""
+Makes `n` children to node, each with a single friend
+"""
+function make_children(node::Node, n::Int, friend::Node)
+    for _ in 1:n
+        new_node = Node(friend)
+        push!(node.friends, new_node)
+    end
+end
+```
+
+
+```{julia}
+# make a tree
+root = Node()
+make_children(root, 3, root)
+for node in root.friends
+    make_children(node, 2,root)
+end
+
+root
+```
+
+Note that when we try to show `root`, it's complete gibberish. We can write a `Base.show()` function to make this pretty:
+
+```{julia}
+# make it show up pretty
+function Base.show(io::IO, x::Node)
+    shown = Set{Node}()
+    function recursive_show(y::Node, depth::Int)
+        print(io, "  "^depth*"Node: $(y.id)")
+        if y in shown
+            println(io, " (already shown)")
+        else
+            push!(shown, y)
+            println(io, ", friends:")
+            for f in y.friends
+                recursive_show(f, depth+1)
+            end
+        end
+    end
+    recursive_show(x, 0)
+    return nothing
+end
+
+root
+```
+
+Suppose we now want to save this in a file...
+
+```{julia}
+using Serialization
+serialize("work/tree.dat", root)
+```
+
+
+
+```{julia}
+newroot = deserialize("work/tree.dat")
+```
+
+<span style="font-size:100px;color:#ff0000;">BELIEVE ME</span>
