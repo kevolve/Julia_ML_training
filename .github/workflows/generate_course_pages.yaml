@@ -1,4 +1,4 @@
-name: Generate and deploy course material 
+name: Generate and deploy course material
 
 on:
   push:
