@@ -23,11 +23,12 @@ jobs:
           version: 1.7.28
       - uses: actions/checkout@v4
       - run: make ci
+      - run: pwd
+      - run: ls -lah
       - uses: actions/upload-pages-artifact@v3
         with:
           path: |
             index.html
-            index_files/**/*
 
   deploy:
     if: github.ref == 'refs/heads/main'
