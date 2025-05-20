@@ -28,8 +28,6 @@ jobs:
           path: |
             index.html
             index_files/**/*
-            # unit*/unit_*.html
-            # unit*/unit_*_files/**/*
 
   deploy:
     if: github.ref == 'refs/heads/main'
