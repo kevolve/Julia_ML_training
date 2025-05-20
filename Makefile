@@ -28,9 +28,9 @@ u5:
 
 .PHONY: ci
 ci:
-	julia --project=. -e 'using Pkg; Pkg.activate("."); Pkg.instantiate()' && quarto render index.qmd
-# cd unit1 && julia --project=. -e 'using Pkg; Pkg.activate("."); Pkg.instantiate()' && cd .. && quarto render unit1/unit_1.qmd
-# cd unit2 && julia --project=. -e 'using Pkg; Pkg.activate("."); Pkg.instantiate()' && cd .. && quarto render unit2/unit_2.qmd
-# cd unit3 && julia --project=. -e 'using Pkg; Pkg.activate("."); Pkg.instantiate()' && cd .. && quarto render unit3/unit_3.qmd
-# cd unit4 && julia --project=. -e 'using Pkg; Pkg.activate("."); Pkg.instantiate()' && cd .. && quarto render unit4/unit_4.qmd
-# cd unit5 && julia --project=. -e 'using Pkg; Pkg.activate("."); Pkg.instantiate()' && cd .. && quarto render unit5/unit_5.qmd
+	quarto render index.qmd
+	cd unit1 && julia --project=. -e 'using Pkg; Pkg.activate("."); Pkg.instantiate()' && cd .. && quarto render unit1/unit_1.qmd
+	cd unit2 && julia --project=. -e 'using Pkg; Pkg.activate("."); Pkg.instantiate()' && cd .. && quarto render unit2/unit_2.qmd
+	cd unit3 && julia --project=. -e 'using Pkg; Pkg.activate("."); Pkg.instantiate()' && cd .. && quarto render unit3/unit_3.qmd
+	cd unit4 && julia --project=. -e 'using Pkg; Pkg.activate("."); Pkg.instantiate()' && cd .. && quarto render unit4/unit_4.qmd
+	cd unit5 && julia --project=. -e 'using Pkg; Pkg.activate("."); Pkg.instantiate()' && cd .. && quarto render unit5/unit_5.qmd
