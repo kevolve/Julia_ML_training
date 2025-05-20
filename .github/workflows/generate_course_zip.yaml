@@ -1,4 +1,4 @@
-name: Generate and deploy course material
+name: Generate and deploy course material 
 
 on:
   push:
@@ -23,12 +23,14 @@ jobs:
           version: 1.7.28
       - uses: actions/checkout@v4
       - run: make ci
-      - run: pwd
-      - run: ls -lah
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
+          name: github-pages
           path: |
             index.html
+            index_files/**/*
+            unit*/unit_*.html
+            unit*/unit_*_files/**/*
 
   deploy:
     if: github.ref == 'refs/heads/main'
@@ -38,6 +40,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+      - uses: actions/deploy-pages@v4
