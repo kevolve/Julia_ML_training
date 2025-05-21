@@ -11,11 +11,9 @@ format:
         source: false
 ---
 
-Welcome to the AIMS Julia Language Workshop run by Accumulation Point.
+Welcome to the AIMS Julia Language Workshop run by Accumulation Point. Your instructors are [Yoni Nazarathy](https://yoninazarathy.com/) and [Aapeli Vuorinen](https://www.aapelivuorinen.com/). 
 
-In this workshop, we will...
-
-
+This iteration of the workshop runs over three days during June 2025 via videoconferencing. This is the schedule:
 
 | Session         | Material                    | Instructor(s) |
 |-----------------|-----------------------------|---------------|
@@ -24,3 +22,6 @@ In this workshop, we will...
 | Day 2 afternoon | [Unit 3](unit3/unit_3.html) | Yoni          |
 | Day 3 morning   | [Unit 4](unit4/unit_4.html) | Aapeli        |
 | Day 3 afternoon | [Unit 5](unit5/unit_5.html) | Yoni          |
+
+
+**Books:** The course materials include a variety of links to online sources. Additionally if you are a "book person" you may be interested in the books, @kochenderfer2019algorithms, @lauwens2019think, @nazarathy2021statistics, and @tureci2025julia. The _Kochenderfer and Wheeler_ book is a great optimization resource using Julia code. The _Lauwens and Downey_ is a great introductory coding book using Julia, The _Nazarathy and Klok_ book is a statistics book, also introducing Julia. Finally, the newer _Türeci, Dağıstanlı, and Türk Çakır_ seems to be a good resource, especially for readers with a physics background.

@@ -3,7 +3,12 @@ title: "Unit 5 - Machine Learning, Statistics, and Optimization"
 engine: julia
 ---
 
-# Deep Learning
+# Deep Learning (and a bit of SciML)
+
+* [Flux.jl](https://github.com/FluxML/Flux.jl) [Flux Docs](https://fluxml.ai/Flux.jl/stable/)
+* [Lux.jl](https://github.com/LuxDL/Lux.jl) [Lux Docs](https://lux.csail.mit.edu/stable/)
+* [SimpleChains.jl](https://github.com/PumasAI/SimpleChains.jl)
+* [DiffEqFlux.jl](https://docs.sciml.ai/DiffEqFlux/stable/examples/neural_ode/)
 
 ```{julia}
 using Flux, Flux.Data.MNIST, Statistics, Random, Plots
@@ -69,7 +74,7 @@ plot(p1,p2,layout=(2,1))
 * [MLJ - A Machine Learning Framework for Julia](https://juliaai.github.io/MLJ.jl/stable/)
 * [Turing.jl](https://turinglang.org/docs/getting-started/index.html)
 * Older (probably not to use): [ScikitLearn.jl](https://github.com/cstjean/ScikitLearn.jl), [Knet.jl](https://github.com/denizyuret/Knet.jl).
-*
+
 
 # Selected topics from Statistics
 
@@ -84,3 +89,11 @@ plot(p1,p2,layout=(2,1))
 
 * [Optim.jl](https://github.com/JuliaNLSolvers/Optim.jl)
 * [Jump.jl](https://github.com/jump-dev/JuMP.jl)
+
+# Additional online resources
+
+...
+
+# Exercises
+
+...
