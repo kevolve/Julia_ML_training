@@ -90,10 +90,34 @@ using DataStructures
 
 # Basic text processing
 
-* multiline
-* read shakespear
-* td-idf
-* parse, etc
+```{julia}
+x = 2
+"The value of x is $x"
+```
+
+```{julia}
+split("Hello world!")
+```
+
+```{julia}
+my_life_story = """
+I was born
+in 1935.
+"""
+```
+
+```{julia}
+ismutable(String)
+```
+
+```{julia}
+println("A rough ASCII table")
+println("Decimal\tHex\tCharacter")
+for c in 0x20:0x7E
+    println(c,"\t","0x" * string(c,base=16),"\t",Char(c))
+end
+```
+
 
 # Dataframes and CSV files - intro
 
