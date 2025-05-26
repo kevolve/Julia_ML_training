@@ -15,13 +15,26 @@ Welcome to the AIMS Julia Language Workshop run by Accumulation Point. Your inst
 
 This iteration of the workshop runs over three days during June 2025 via videoconferencing. This is the schedule:
 
-| Session         | Material                    | Instructor(s) |
-|-----------------|-----------------------------|---------------|
-| Day 1 full day  | [Unit 1](unit1/unit_1.html) | Yoni & Aapeli |
-| Day 2 morning   | [Unit 2](unit2/unit_2.html) | Aapeli        |
-| Day 2 afternoon | [Unit 3](unit3/unit_3.html) | Yoni          |
-| Day 3 morning   | [Unit 4](unit4/unit_4.html) | Aapeli        |
-| Day 3 afternoon | [Unit 5](unit5/unit_5.html) | Yoni          |
+| Session         | Unit                        | Material                                       |Instructor(s)  |
+|-----------------|-----------------------------|------------------------------------------------|---------------|
+| Day 1 full day  | [Unit 1](unit1/unit_1.html) | Your first (BIG) day with the Julia language   | Yoni & Aapeli |
+| Day 2 morning   | [Unit 2](unit2/unit_2.html) | Processing Data                                | Aapeli        |
+| Day 2 afternoon | [Unit 3](unit3/unit_3.html) | Numerics and Monte Carlo                       | Yoni          |
+| Day 3 morning   | [Unit 4](unit4/unit_4.html) | Parallel and Fast                              | Aapeli        |
+| Day 3 afternoon | [Unit 5](unit5/unit_5.html) | Machine Learning, Statistics, and Optimization | Yoni          |
 
+**GitHub:** The course materials are created via [Quarto](https://quarto.org/) with the source for this website (in `.qmd` files) in the [GitHub repo](https://github.com/open-AIMS/Julia_ML_training). The GitHub repo also defines a [Julia environment](https://pkgdocs.julialang.org/v1/environments/) for each unit of the course. It is recommended to clone (or download the zip) of the repo and then work in the `/work` folder under each unit. Then when working on unit X, it is recommended to instantiate the environment for that unit. Specific instructions are outlined during the course. 
+
+**The nature of the course (how it works):** The instructors present material live, following the quarto generated pages, and demonstrate code live (VS-Code/REPL/Jupyter). Example notebooks and files created by the instructors will be saved in the `/work` folder and committed to GitHub. It is recommended that course participants (students) run some of the code in parallel to the instructors, try out different things, and carry out short exercises. Slightly longer exercises are suggested at the end of each unit and these can be carried out by participants between sessions. Online help sessions will also be provided by the instructors. As a first step, participants should install Julia as outlined in [Section 1 of Unit 1](https://open-aims.github.io/Julia_ML_training/unit1/unit_1.html#installation).
+
+**General resources:** The course materials link to general resources for specific subjects covered. Still here are valuable resources:
+
+* [The Julia Documentation](https://docs.julialang.org/en/v1/)
+* [The Julia Language YouTube Channel](https://docs.julialang.org/en/v1/)
+* [The Jolin.io YouTube Channel](https://www.youtube.com/@jolin-io)
+* [The Julia Fundamentals Path in Pumas](https://tutorials.pumas.ai/#path-1-julia-fundamentals-for-pumas) 
+* [The Julia Discourse](https://discourse.julialang.org/)
+* [The Julia language slack](https://julialang.org/slack/)
+* Getting help from an LLM is always helpful.
 
 **Books:** The course materials include a variety of links to online sources. Additionally if you are a "book person" you may be interested in the books, @kochenderfer2019algorithms, @lauwens2019think, @nazarathy2021statistics, and @tureci2025julia. The _Kochenderfer and Wheeler_ book is a great optimization resource using Julia code. The _Lauwens and Downey_ is a great introductory coding book using Julia, The _Nazarathy and Klok_ book is a statistics book, also introducing Julia. Finally, the newer _Türeci, Dağıstanlı, and Türk Çakır_ seems to be a good resource, especially for readers with a physics background.
