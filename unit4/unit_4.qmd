@@ -13,6 +13,14 @@ talk about race conditions
 
 `Threads.@threads` for loops...
 
+
+```{julia}
+Threads.@threads for _ in 1:20
+    sleep(2)
+    println("hello from $(Threads.threadid())")
+end
+```
+
 ## Example - Simple Number Theory Computation
 
 The [Goldbach Conjecture](https://en.wikipedia.org/wiki/Goldbach%27s_conjecture):
