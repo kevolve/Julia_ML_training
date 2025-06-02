@@ -114,7 +114,9 @@ https://docs.julialang.org/en/v1/manual/noteworthy-differences/#Noteworthy-diffe
 
 # Additional online resources
 
-...
+* An incredible [Parallel Computing and Scientific Machine Learning (SciML): Methods and Applications](https://book.sciml.ai/) course/book by [Chris Rackauckas](https://chrisrackauckas.com/).
+* A [Julia for high-performance scientific computing](https://enccs.github.io/julia-for-hpc/) course.
+* Another [High Performance Course](https://github.com/carstenbauer/JuliaHLRS22?tab=readme-ov-file).
 
 # Exercises
 
