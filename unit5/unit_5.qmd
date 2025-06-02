@@ -92,7 +92,8 @@ plot(p1,p2,layout=(2,1))
 
 # Additional online resources
 
-...
+* A [Machine Learning Fundamentals](https://tutorials.pumas.ai/html/AIDD/01-machine_learning_fundamentals.html) tutorial by A [PumasAI](https://pumas.ai/).
+* A [Machine Learning Unit](https://courses.smp.uq.edu.au/MATH2504/2023/lectures_html/lecture-unit-8.html) in a University of Queensland Course (stay on the semester of that link - and not "current semester" which doesn't have that unit).
 
 # Exercises
 

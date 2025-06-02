@@ -251,12 +251,19 @@ serialize("work/tree.dat", root)
 newroot = deserialize("work/tree.dat")
 ```
 
-<span style="font-size:100px;color:#ff0000;">BELIEVE ME</span>
-
 # Additional online resources
 
-...
+* Basic blog post about [Tuples and Vectors, Allocations and Performance for Beginners
+](https://jkrumbiegel.com/pages/2020-10-31-tuples-and-vectors/).
+* This [introductory post](https://blog.glcs.io/staticarrays) covers [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) which is a popular library used in many numerical packages.
+* The book @storopolihuijzeralonso2021juliadatascience is a good resource for DataFrames.  
+* A papper about `DataFrames.jl` made it into the Journal of Statistical Software, @bouchet2023dataframes.
+* The book @kaminski2023julia is also written by the main creator of `DataFrames.jl`.
+* This [Pumas `DataFramesMeta.jl` tutorial](https://tutorials.pumas.ai/html/DataWranglingInJulia/05-mutating-dfmeta.html) is useful.
+* See this [Hacker News](https://news.ycombinator.com/item?id=29360221) discussion around [JSON.jl](https://github.com/JuliaIO/JSON.jl) and [JSON3.jl](https://github.com/quinnj/JSON3.jl).
+* This unit used many macros. The proper documentation is [here](https://docs.julialang.org/en/v1/manual/metaprogramming/). This [blog post](https://jkrumbiegel.com/pages/2021-06-07-macros-for-beginners/) is an elementary introduction.
 
 # Exercises
 
 ...
+
