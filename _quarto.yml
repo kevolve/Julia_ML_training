@@ -13,9 +13,6 @@ format:
     include-in-header:
         text: |
               <div style="max-width: 1368px; margin: 0 auto;padding:20px">
-                <img style="display: inline-block; max-height: 50px; margin: 0px 20px;" src="https://www.accumulationpoint.com/assets/accumulation-point.svg" alt="Accumulation Point" />
-                <img style="display: inline-block; max-height: 50px; margin: 0px 20px;" src="https://www.aims.gov.au/themes/custom/aims_refresh/assets/images/logos/logo.svg" />
-                <img style="display: inline-block; max-height: 50px; margin: 0px 20px;" src="https://julialang.org/assets/infra/logo.svg" />
                 <h1>A Crash Course on the Julia Language and Ecosystem</h1>
                 <p>An <a href="https://www.accumulationpoint.com/">Accumulation Point</a> workshop for 
                     <a href="https://www.aims.gov.au/">AIMS</a>, delivered during June, 2025.
