@@ -41,3 +41,11 @@ This iteration of the workshop runs over three days during June 2025 via videoco
 **Books:** If you are a "book person" you may be interested in the following books: @kochenderfer2019algorithms, @lauwens2019think, @nazarathy2021statistics, and @tureci2025julia. The _Kochenderfer and Wheeler_ book is a great optimization resource using Julia code. _Lauwens and Downey_ is a great introductory coding book using Julia, The _Nazarathy and Klok_ book is a statistics book, also introducing Julia. Finally, the newer _Türeci, Dağıstanlı, and Türk Çakır_ seems to be a good resource, especially for readers with a physics background.
 
 We hope you enjoy the course and that we can help you come out of it with an appreciation of the many strengths and advantages of the Julia programming language!
+
+```{julia}
+using Dates
+
+utc_now = now()
+aest_now = utc_now + Hour(12)
+println("Last built: ", Dates.format(aest_now, "yyyy-mm-dd HH:MM"), " (AEST)")
+```

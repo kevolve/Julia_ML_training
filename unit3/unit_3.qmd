@@ -406,8 +406,12 @@ plot!(lamRange,mGraph2(1987,1988),
     xlabel=L"\lambda", ylabel = "Mean")
 ```
 
+## An example with Graphs
+
+See [](https://github.com/JuliaGraphs)
+
 ```{julia}
-using LightGraphs, Distributions, StatsBase, Random, Plots, LaTeXStrings;pyplot()
+using LightGraphs, Distributions, StatsBase, Random, Plots, LaTeXStrings
 Random.seed!(0)
 
 function createNetwork(edges)
@@ -672,10 +676,11 @@ md1_theory = ρ/(1-ρ)*(2-ρ)/2
 println("Theoretical mean queue length: ", md1_theory)
 ```
 
-# Some more graphics
+# Some more illustrations
+
+Here is a visualization of several bi-variate distributions that have the same mean vector and covariance matrix, but are different:
 
 ```{julia}
-using Distributions, LinearAlgebra, LaTeXStrings, Random, Plots
 Random.seed!(1)
 
 N = 10^5
@@ -715,9 +720,8 @@ scatter!(first.(data[3]),last.(data[3]),c=:green, ms=1,msw=0,label="Exponential"
 
 Here is a simple way to create animations. See the [docs](https://docs.juliaplots.org/latest/animations/).
 
-(Currently commented out for speedup in building.)
 
-<!-- ```{julia}
+```{julia}
 using Plots
 
 function graphCreator(n::Int)
@@ -747,7 +751,7 @@ function graphCreator(n::Int)
 end
 
 graphCreator(16)
-``` -->
+```
 
 Here are some more "touched up" graphics. Note the use of the in-built [Dates](https://docs.julialang.org/en/v1/stdlib/Dates/) library.
 
@@ -783,7 +787,7 @@ plot(p1,p2,p3,p4, size = (800,500), margin = 5mm)
 ```
 
 ```{julia}
-using Plots, LaTeXStrings, Measures
+using LaTeXStrings, Measures
 
 f(x,y) = x^2 + y^2
 f0(x) = f(x,0)
@@ -847,9 +851,9 @@ reshape([dists ;  params.(dists) ;
 		length(dists),3)
 ```
 
-```{julia}
-using Distributions, Plots
+Here we use the `pdf` function for the [hypergeometric distribution](https://en.wikipedia.org/wiki/Hypergeometric_distribution):
 
+```{julia}
 L, K, n  = 500, [450, 400, 250, 100, 50], 30
 hyperDists = [Hypergeometric(k,L-k,n) for k in K]
 xGrid = 0:1:n
@@ -862,8 +866,10 @@ bar( xGrid, pmfs,
 	xlabel="x", ylabel="Probability", legend=:top)
 ```
 
+Here are some relationships between the [beta distribution](https://en.wikipedia.org/wiki/Beta_distribution) and some special functions ([gamma](https://en.wikipedia.org/wiki/Gamma_function) and [beta](https://en.wikipedia.org/wiki/Beta_function)):
+
 ```{julia}
-using SpecialFunctions, Distributions
+using SpecialFunctions
 
 a,b = 0.2, 0.7
 x = 0.75
@@ -878,8 +884,10 @@ println("beta($a,$b)    = $betaAB1,\t$betaAB2,\t$betaAB3 ")
 println("betaPDF($a,$b) at $x = $betaPDFAB1,\t$betaPDFAB2")
 ```
 
+Here is a relationship between the exponential distribution and the geometric distribution: 
+
 ```{julia}
-using StatsBase, Distributions, Plots
+using StatsBase
 
 lambda, N = 1, 10^6
 xGrid = 0:6
@@ -936,7 +944,11 @@ There are multiple options for automatic differenation. See also the basic examp
 - [ReverseDiff.jl](https://github.com/JuliaDiff/ReverseDiff.jl): Provides reverse-mode (backward-mode) automatic differentiation, ideal for functions with many inputs and few outputs, such as those commonly encountered in machine learning.
 - [Zygote.jl](https://github.com/FluxML/Zygote.jl): Source-to-source automatic differentiation supporting reverse-mode; widely used in the Flux ecosystem and beyond for differentiable programming.
 - [Enzyme.jl](https://github.com/EnzymeAD/Enzyme.jl): High-performance AD using LLVM, supporting both forward and reverse modes, and capable of differentiating lower-level code and some external libraries.
+
+These packages are related:
+
 - [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl): Symbolic computation and differentiation; useful for obtaining analytic derivatives or generating optimized derivative code.
+- [Calculus.jl](https://github.com/JuliaMath/Calculus.jl): The Calculus package provides tools for working with the basic calculus operations of differentiation and integration. You can use the Calculus package to produce approximate derivatives by several forms of finite differencing or to produce exact derivative using symbolic differentiation.
 
 # Additional online resources
 
