@@ -782,7 +782,7 @@ function graphCreator(n::Int)
         frame(anim)
     end
 
-    gif(anim, "graph.gif", fps = 60)
+    gif(anim, "work/graph.gif", fps = 60)
 end
 
 graphCreator(16)

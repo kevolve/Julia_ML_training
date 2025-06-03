@@ -1361,6 +1361,7 @@ QQQQ - Example
 * Some of the materials in this unit are motivated by a University of Queensland Course, [Programming of Simulation, Analysis, and Learning (Data) Systems](https://courses.smp.uq.edu.au/MATH2504/). The course website for that course contains many more materials of this nature.
 * Integration with Wolfram Mathematica is via [MathLink.jl](https://github.com/JuliaInterop/MathLink.jl).
 * Calling C or Fortran directly within Julia is in-built. See the [documentation](https://docs.julialang.org/en/v1/manual/calling-c-and-fortran-code/).
+* Julia has garbage collection. See the [docs](https://docs.julialang.org/en/v1/devdocs/gc/).
 
 # Exercises
 
