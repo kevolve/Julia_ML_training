@@ -75,6 +75,36 @@ plot(p1,p2,layout=(2,1))
 * [Turing.jl](https://turinglang.org/docs/getting-started/index.html)
 * Older (probably not to use): [ScikitLearn.jl](https://github.com/cstjean/ScikitLearn.jl), [Knet.jl](https://github.com/denizyuret/Knet.jl).
 
+## A Quick MLJ Tutorial
+
+MLJ.jl is Julia's comprehensive machine learning framework that provides a unified interface to hundreds of machine learning models. 
+
+```{julia}
+using MLJ
+using DataFrames
+using Statistics
+```
+
+```{julia}
+X, y = @load_boston
+first(X, 3)
+```
+
+```{julia}
+# Check data types and summary
+schema(X)
+```
+
+```{julia}
+# Search for available models
+models("DecisionTree")
+```
+
+```{julia}
+# Load a specific model
+Tree = @load DecisionTreeRegressor pkg=DecisionTree
+tree_model = Tree()
+```
 
 # Selected topics from Statistics
 
