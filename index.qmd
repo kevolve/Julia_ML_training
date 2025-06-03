@@ -42,6 +42,8 @@ This iteration of the workshop runs over three days during June 2025 via videoco
 
 We hope you enjoy the course and that we can help you come out of it with an appreciation of the many strengths and advantages of the Julia programming language!
 
+**Time of build for this version:**
+
 ```{julia}
 using Dates
 

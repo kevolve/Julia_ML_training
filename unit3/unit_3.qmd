@@ -3,7 +3,9 @@ title: "Unit 3 - Numerics and Monte Carlo"
 engine: julia
 ---
 
-In this unit we explore multiple topics from numerical mathematics and simulation. Some of the basic packages we use are:
+In this unit we explore multiple topics from numerical mathematics and simulation. 
+
+Some of the basic packages we use are:
 
 ```{julia}
 using LinearAlgebra # in-built
@@ -20,18 +22,27 @@ We also use other packages along the way.
 
 Julia's differential equations package, [DifferentialEquations.jl](https://github.com/SciML/DifferentialEquations.jl), is powerful and sits at the forefront of the the much larger, [SciML](https://sciml.ai/) ecosystem. See the [DifferentialEquations.jl docs](https://docs.sciml.ai/DiffEqDocs/stable/).
 
-Here is a simple physical system, first solved "manually" with a matrix exponential:
+As an introductory example, here is a simple (linear) physical system.
 
+$$
+\frac{d}{dt}x(t) = A x(t).
+$$
+
+where the matrix $A$ is,
 ```{julia}
-k, b, M = 1.2, 0.3, 2.0
+k, b, M = 1.2, 0.3, 2.0 # some constants
 A = [0 1;
     -k/M -b/M]
+```
 
-initX = [8., 0.0]
-tEnd = 50.0
-tRange = 0:0.1:tEnd
+Lets first solve this "manually" with a matrix exponential:
 
-manualSol = [exp(A*t)*initX for t in tRange]
+```{julia}
+init_x = [8., 0.0] # initial condition
+t_end = 50.0
+t_range = 0:0.1:t_end
+
+manual_sol = [exp(A*t)*init_x for t in t_range]
 ```
 
 Now using `DifferentialEquations.jl`:
@@ -39,47 +50,47 @@ Now using `DifferentialEquations.jl`:
 ```{julia}
 using DifferentialEquations 
 
-linearRHS(x,Amat,t) = Amat*x
-prob = ODEProblem(linearRHS, initX, (0,tEnd), A)
+linear_RHS(x, Amat, t) = Amat*x
+prob = ODEProblem(linear_RHS, init_x, (0,t_end), A)
 sol = solve(prob)
 ```
 
 Plotting the solution:
 
 ```{julia}
-p1 = plot(first.(manualSol), last.(manualSol),
+p1 = plot(first.(manual_sol), last.(manual_sol),
 	c=:blue, label="Manual trajectory")
 p1 = scatter!(first.(sol.u), last.(sol.u),
 	c=:red, ms = 5, msw=0, label="DiffEq package")
-p1 = scatter!([initX[1]], [initX[2]],
+p1 = scatter!([init_x[1]], [init_x[2]],
 	c=:black, ms=10, label="Initial state",	xlims=(-7,9), ylims=(-9,7),
 	ratio=:equal, xlabel="Displacement", ylabel="Velocity")
-p2 = plot(tRange, first.(manualSol),
+p2 = plot(t_range, first.(manual_sol),
 	c=:blue, label="Manual trajectory")
 p2 = scatter!(sol.t, first.(sol.u),
 	c=:red, ms = 5, msw=0, label="DiffEq package")
-p2 = scatter!([0], [initX[1]],
+p2 = scatter!([0], [init_x[1]],
 	c=:black, ms=10, label="Initial state", xlabel="Time",
 	ylabel="Displacement")
 plot(p1, p2, size=(800,400), legend=:topright)
 ```
 
-Here is a non-linear compartmental epidemics model:
+Here is a non-linear compartmental epidemics ([SEIR](https://en.wikipedia.org/wiki/Compartmental_models_(epidemiology))) model:
 
 ```{julia}
-beta, delta, gamma = 0.25, 0.2, 0.1
+β, δu, γ = 0.25, 0.2, 0.1
 initialInfect = 0.025
-println("R0 = ", beta/gamma)
+println("R0 = ", β/γ)
 
-initX = [1-initialInfect, 0.0, initialInfect, 0.0]
+init_x = [1-initialInfect, 0.0, initialInfect, 0.0]
 tEnd = 100.0
 
-RHS(x,parms,t) = [  -beta*x[1]*x[3],
-                    beta*x[1]*x[3] - delta*x[2],
-                    delta*x[2] - gamma*x[3],
-                    gamma*x[3] ]
+RHS(x,parms,t) = [  -β*x[1]*x[3],
+                    β*x[1]*x[3] - δu*x[2],
+                    δu*x[2] - γ*x[3],
+                    γ*x[3] ]
 
-prob = ODEProblem(RHS, initX, (0,tEnd), 0)
+prob = ODEProblem(RHS, init_x, (0,tEnd), 0)
 sol = solve(prob)
 println("Final infected proportion= ", sol.u[end][4])
 
@@ -90,23 +101,23 @@ plot!(sol.t,((x)->x[4]).(sol.u),label = "Removed", c=:yellow,
     xlabel = "Time", ylabel = "Proportion",legend = :top)
 ```
 
-# Simulation of Continuous Time Markov Chain
+# Simulation of Continuous Time Markov Chains
 
 A similar epidemics model, now stochastic:
 
 ```{julia}
 using Distributions
 
-function simulateSIRDoobGillespie(β ,δ, γ, I0, M, T)
+function simulateSIRDoobGillespie(β ,δu, γ, I0, M, T)
     t, S, E, I, R = 0.0, M-I0, 0, I0, 0
     tValues, sValues, eValues, iValues, rValues = [0.0], [S], [E], [I], [R]
     while t<T
         infectionRate = β*I*S
-        symptomRate = δ*E
+        symptomRate = δu*E
         removalRate = γ*I
         totalRate = infectionRate + symptomRate + removalRate
         probs = [infectionRate, symptomRate, removalRate]/totalRate
-        t += rand(Exponential(1/(totalRate)))
+        t += rand(Exponential(1/totalRate))
         u = rand()
         if u < probs[1]
             S -= 1; E += 1
@@ -128,16 +139,16 @@ Now le's simulate it:
 ```{julia}
 Random.seed!(0)
 
-β, δ, γ = 0.25, 0.4, 0.1
+β, δu, γ = 0.25, 0.4, 0.1
 initialInfect = 0.025
 M = 1000
 I0 = floor(Int, initialInfect*M)
 N = 30
 
-tV,sV,eV,iV,rV = simulateSIRDoobGillespie(beta/M,delta,gamma,I0,M,Inf)
+tV,sV,eV,iV,rV = simulateSIRDoobGillespie(β/M,δu,γ,I0,M,Inf)
 lastT = tV[end]
 
-finals = [simulateSIRDoobGillespie(beta/M,delta,gamma,I0,M,Inf)[5][end] for _ in 1:N]/M;
+finals = [simulateSIRDoobGillespie(β/M,δu,γ,I0,M,Inf)[5][end] for _ in 1:N]/M;
 ```
 
 And plot it:
@@ -152,13 +163,19 @@ plot!(tV,rV/M,label = "Removed", c=:yellow,
 scatter!(lastT*1.025*ones(N),finals, c = :yellow,label= "Final Infected")
 ```
 
+A more serious package for simulation of such "jump processes" is [JumpProcesses.jl](https://github.com/SciML/JumpProcesses.jl). See also the [docs](https://docs.sciml.ai/JumpProcesses/stable/tutorials/discrete_stochastic_example/). Related is the [Catalyst.jl](https://github.com/SciML/Catalyst.jl) package, focusing on chemical reactions.
+
 # Linear Algebra
 
-Julia provides strong in-built support for Linear Algebra, with syntax somewhat similar to MATLAB. See the [Linear Algebra Documentation](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/).
+Julia provides strong in-built support for Linear Algebra, with syntax somewhat similar to MATLAB (see [Julia syntax comparison with MATLAB](https://docs.julialang.org/en/v1/manual/noteworthy-differences/#Noteworthy-differences-from-MATLAB)). See the [Linear Algebra Documentation](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/).
 
 The in-built linear algebra capabilities are primarily powered by the [BLAS](https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms) (Basic Linear Algebra Subprograms) and [LAPACK](https://en.wikipedia.org/wiki/LAPACK) (Linear Algebra Package) libraries, which are industry-standard, highly optimized libraries for performing core matrix and vector operations as well as advanced factorizations and eigenvalue problems. 
 
 Julia ships with its own [OpenBLAS](https://www.openblas.net/) build by default, but users can swap in other BLAS/LAPACK backends such as [MKL.jl](https://github.com/JuliaLinearAlgebra/MKL.jl) for Intel’s Math Kernel Library, enabling optimized performance on compatible hardware.
+
+See also the [JuliaLinearAlgebra](https://github.com/JuliaLinearAlgebra) organization.
+
+Let's get going with basic linear algebra.
 
 ```{julia}
 A = [1 2 3; 
@@ -229,9 +246,13 @@ println("Summing with the row iteration moving fastest")
 
 ## A Variety of Ways for doing least-squares
 
+Here is a very simple (X,Y) dataset.
+
 ```{julia}
 data = "../data/L1L2data.csv" |> CSV.File |> DataFrame
 ```
+
+Let's fit a regression model with the [GLM.jl](https://github.com/JuliaStats/GLM.jl) package:
 
 ```{julia}
 using GLM
@@ -239,6 +260,10 @@ using GLM
 modelK = glm(@formula(Y ~ X), data, Normal())
 b0K, b1K = coef(modelK)
 ```
+
+So we see the constant (intercept) term and the slope term.
+
+Now let's retrieve the same least squares estimates in many other ways:
 
 ```{julia}
 xVals, yVals = data[:,1], data[:,2]
@@ -279,20 +304,24 @@ V, Sp, Us = F.V, Diagonal(1 ./ F.S), F.U'
 b0H, b1H = (V*Sp*Us)*yVals
 
 # Approach I
-eta, eps = 0.002, 10^-6.
+η, eps = 0.002, 10^-6.
 b, bPrev = [0,0], [1,1]
 while norm(bPrev-b) >= eps
     global bPrev = b
-    global b = b - eta*2*A'*(A*b - yVals)
+    global b = b - η*2*A'*(A*b - yVals)
 end
 b0I, b1I = b[1], b[2]
 
 # Approach J
 modelJ = lm(@formula(Y ~ X), data)
-b0J, b1J = coef(modelJ)
+b0J, b1J = coef(modelJ);
+```
 
-println(round.([b0A,b0B,b0C,b0D,b0E,b0F,b0G,b0H,b0I,b0J,b0K],digits=3))
-println(round.([b1A,b1B,b1C,b1D,b1E,b1F,b1G,b1H,b1I,b1J,b1K],digits=3))
+We can see that all these ways yield the same solution:
+
+```{julia}
+println(round.([b0A,b0B,b0C,b0D,b0E,b0F,b0G,b0H,b0I,b0J,b0K], digits=3))
+println(round.([b1A,b1B,b1C,b1D,b1E,b1F,b1G,b1H,b1I,b1J,b1K], digits=3))
 ```
 
 ## Supporting linear algebra packages
@@ -310,12 +339,12 @@ Julia provides quite a-lot of linear algebra out of the box. Yet here are some a
 Here is an example with common random numbers and using RNG (Random Number Generation) objects.
 
 See the [Random Numbers](https://docs.julialang.org/en/v1/stdlib/Random/) section in the Julia docs. Julia uses the [Xorshift](https://en.wikipedia.org/wiki/Xorshift) random number generator as a default. It was [Mersenne Twister
-](https://en.wikipedia.org/wiki/Mersenne_Twister) up to (including Julia 1.6). Good to know also about [`StableRNGs.jl](https://github.com/JuliaRandom/StableRNGs.jl).
+](https://en.wikipedia.org/wiki/Mersenne_Twister) up to  Julia 1.6. Good also to know also about [StableRNGs.jl](https://github.com/JuliaRandom/StableRNGs.jl).
 
 ```{julia}
 using Measures # just helps for plots
 
-function path(rng::AbstractRNG, α::Real, n::Int=5000)
+function create_path(rng::AbstractRNG, α::Real, n::Int=5000)
     x = 0.0
     y = 0.0
     xDat = Float64[]
@@ -349,20 +378,20 @@ alpha_range = [0.0, 0.002, 0.004]
 args = (xlabel = "x", ylabel = "y", xlims=(-150, 150), ylims=(-150, 150))
 
 #Plot runs with same random numbers (common random numbers)\
-p1 = plot(path(Xoshiro(27), alpha_range[1]), c = :blue, label = "α=$(alpha_range[1])")
-p1 = plot!(path(Xoshiro(27), alpha_range[2]), c = :red, label = "α=$(alpha_range[2])")
-p1 = plot!(path(Xoshiro(27), alpha_range[3]), c = :green, label = "α=$(alpha_range[3])", title = "Same seed", legend = :topright; args...) 
+p1 = plot(create_path(Xoshiro(27), alpha_range[1]), c = :blue, label = "α=$(alpha_range[1])")
+p1 = plot!(create_path(Xoshiro(27), alpha_range[2]), c = :red, label = "α=$(alpha_range[2])")
+p1 = plot!(create_path(Xoshiro(27), alpha_range[3]), c = :green, label = "α=$(alpha_range[3])", title = "Same seed", legend = :topright; args...) 
 
 #Plot runs with different random numbers
 rng = Xoshiro(27)
-p2 = plot(path(rng, alpha_range[1]), c = :blue, label = "α=$(alpha_range[1])")
-p2 = plot!(path(rng, alpha_range[2]), c = :red, label = "α=$(alpha_range[2])")
-p2 = plot!(path(rng, alpha_range[3]), c = :green, label = "α=$(alpha_range[3])", title = "Different seeds", legend = :topright; args...) 
+p2 = plot(create_path(rng, alpha_range[1]), c = :blue, label = "α=$(alpha_range[1])")
+p2 = plot!(create_path(rng, alpha_range[2]), c = :red, label = "α=$(alpha_range[2])")
+p2 = plot!(create_path(rng, alpha_range[3]), c = :green, label = "α=$(alpha_range[3])", title = "Different seeds", legend = :topright; args...) 
 
 plot(p1, p2, size=(800, 400), margin=5mm)
 ```
 
-Here is an example tht demonsrates a case where multiple RNGs can be of use:
+Sometimes simulating with multiple RNGs can be of use:
 
 ```{julia}
 using LaTeXStrings
@@ -408,10 +437,10 @@ plot!(lamRange,mGraph2(1987,1988),
 
 ## An example with Graphs
 
-See [](https://github.com/JuliaGraphs)
+See the [JuliaGraphs](https://github.com/JuliaGraphs) organization. We'll use the [Graphs.jl](https://github.com/JuliaGraphs/Graphs.jl) package.
 
 ```{julia}
-using LightGraphs, Distributions, StatsBase, Random, Plots, LaTeXStrings
+using Graphs, Distributions, StatsBase, Random, Plots, LaTeXStrings
 Random.seed!(0)
 
 function createNetwork(edges)
@@ -459,7 +488,10 @@ stephist!(failTimes2, bins=200, c=:red, normed=true, label=L"\lambda=1.0",
     xlims=(0,5), ylims=(0,1.1), xlabel="Network Life Time", ylabel = "Density")
 ```
 
-### A Structured Discrete Event Simulator
+## A Structured Discrete Event Simulator
+
+Let's look at a more complex coding example where 
+we develop  [discrete event simulation](https://en.wikipedia.org/wiki/Discrete-event_simulation) engine.
 
 ```{julia}
 using DataStructures
@@ -624,7 +656,7 @@ function stitch_steps(epochs, values)
         push!(new_values, values[i])
     end
     return (new_epochs, new_values)
-end
+end;
 ```
 
 ```{julia}
@@ -676,7 +708,10 @@ md1_theory = ρ/(1-ρ)*(2-ρ)/2
 println("Theoretical mean queue length: ", md1_theory)
 ```
 
-# Some more illustrations
+# Some graphical illustrations
+
+Here are a few more graphics/plots using [Plots.jl](https://github.com/JuliaPlots/Plots.jl). There is also [StatsPlots.jl](https://github.com/JuliaPlots/StatsPlots.jl) to keep in mind. Importantly, the **other** graphics side of Julia is [Makie.jl](https://github.com/MakieOrg/Makie.jl) with the [Makie Organization](https://github.com/MakieOrg). We'll use this graphics engine in Unit 5. In particular if you like R's ggplot, or [ggplot2](https://ggplot2.tidyverse.org/), then [AlgebraOfGraphics.jl](https://github.com/MakieOrg/AlgebraOfGraphics.jl) from the Makie world is probably the tool for you. See also this [tutorial](https://tutorials.pumas.ai/html/PlottingInJulia/01-AoG-intro.html) by PumasAI.
+
 
 Here is a visualization of several bi-variate distributions that have the same mean vector and covariance matrix, but are different:
 
@@ -756,7 +791,7 @@ graphCreator(16)
 Here are some more "touched up" graphics. Note the use of the in-built [Dates](https://docs.julialang.org/en/v1/stdlib/Dates/) library.
 
 ```{julia}
-using DataFrames, CSV, Statistics, Dates, Plots, Measures
+using HTTP, DataFrames, CSV, Statistics, Dates, Plots, Measures
 
 resp = HTTP.request("GET","https://raw.githubusercontent.com/h-Klok/StatsWithJuliaBook/master/data/temperatures.csv")
 data = CSV.read(IOBuffer(String(resp.body)), DataFrame)
@@ -769,7 +804,7 @@ dates = [Date(
             Year(data.Year[i]), 
             Month(data.Month[i]), 
             Day(data.Day[i])
-        ) for i in 1:nrow(data)]
+            ) for i in 1:nrow(data)]
 
 fortnightRange = 250:263
 brisFortnight = brisbane[fortnightRange]
@@ -812,7 +847,7 @@ plot(p1, p2, p3, layout=(1,3), size=(1200,400), xlabel="x", margin=5mm)
 
 # Probability Distributions
 
-The [Distributions](https://github.com/JuliaStats/Distributions.jl) is very rich and orderly. It can be extended quite easily, see for example [Copulas.jl](https://github.com/lrnv/Copulas.jl), also discussed in @LavernyJimenez2024.
+The [Distributions](https://github.com/JuliaStats/Distributions.jl) package is very rich and orderly. It can be extended quite easily, see for example [Copulas.jl](https://github.com/lrnv/Copulas.jl), also discussed in @LavernyJimenez2024.
 
 Here are some common continuous distributions:
 
@@ -828,7 +863,7 @@ dists = [
     Cauchy(20,3.5)]
 
 println("Distribution \t\t\t Parameters \t Support")
-reshape([dists ;  params.(dists) ;
+reshape([dists ;  Distributions.params.(dists) ;
 		((d)->(minimum(d),maximum(d))).(dists) ],
 		length(dists),3)
 ```
@@ -846,7 +881,7 @@ dists = [
     Poisson(5.5)]
 
 println("Distribution \t\t\t\t\t\t Parameters \t Support")
-reshape([dists ;  params.(dists) ;
+reshape([dists ;  Distributions.params.(dists) ;
 		((d)->(minimum(d),maximum(d))).(dists) ],
 		length(dists),3)
 ```
@@ -876,11 +911,10 @@ x = 0.75
 
 betaAB1 = beta(a,b)
 betaAB2 = (gamma(a)gamma(b))/gamma(a+b)
-betaAB3 = (factorial(a-1)factorial(b-1))/factorial(a+b-1)
 betaPDFAB1 = pdf(Beta(a,b),x)
 betaPDFAB2 = (1/beta(a,b))*x^(a-1) * (1-x)^(b-1)
 
-println("beta($a,$b)    = $betaAB1,\t$betaAB2,\t$betaAB3 ")
+println("beta($a,$b)    = $betaAB1,\t$betaAB2")
 println("betaPDF($a,$b) at $x = $betaPDFAB1,\t$betaPDFAB2")
 ```
 
@@ -913,13 +947,13 @@ using Distributions, Plots, LaTeXStrings
 alphas = [0.5, 1.5, 1]
 lam = 2
 
-lambda(dist::Weibull) = shape(dist)*scale(dist)^(-shape(dist))
-theta(lam,alpha) = (alpha/lam)^(1/alpha)
+λ_param(dist::Weibull) = shape(dist)*scale(dist)^(-shape(dist))
+θ_param(lam,alpha) = (alpha/lam)^(1/alpha)
 
-dists = [Weibull.(a,theta(lam,a)) for a in alphas]
+dists = [Weibull.(a,θ_param(lam,a)) for a in alphas]
 
 hA(dist,x) = pdf(dist,x)/ccdf(dist,x)
-hB(dist,x) = lambda(dist)*x^(shape(dist)-1)
+hB(dist,x) = λ_param(dist)*x^(shape(dist)-1)
 
 xGrid = 0.01:0.01:10
 hazardsA = [hA.(d,xGrid) for d in dists]
@@ -929,7 +963,7 @@ println("Maximum difference between two implementations of hazard: ",
     maximum(maximum.(hazardsA-hazardsB)))
 
 Cl = [:blue :red :green]
-Lb = [L"\lambda=" * string(lambda(d)) * ",   " * L"\alpha =" * string(shape(d)) 
+Lb = [L"\lambda=" * string(λ_param(d)) * ",   " * L"\alpha =" * string(shape(d)) 
         for d in dists]
 
 plot(xGrid, hazardsA, c=Cl, label=reshape(Lb, 1,:), xlabel="x",
@@ -953,7 +987,7 @@ These packages are related:
 # Additional online resources
 
 * The paper @roesch2023julia introduces Julia within the context of the quantitative biology community.
-* Probabilistic programming in Julia: [Turing tutorials](https://turinglang.org/v0.24/tutorials/).
+* We did not touch the world of p robabilistic programming in Julia. See [Turing tutorials](https://turinglang.org/v0.24/tutorials/).
 
 # Exercises
 
