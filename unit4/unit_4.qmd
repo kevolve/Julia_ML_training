@@ -120,4 +120,5 @@ https://docs.julialang.org/en/v1/manual/noteworthy-differences/#Noteworthy-diffe
 
 # Exercises
 
-...
+1. QQQQ
+1. QQQQ

@@ -3,11 +3,26 @@ title: "Unit 3 - Numerics and Monte Carlo"
 engine: julia
 ---
 
-# Differential Equations
+In this unit we explore multiple topics from numerical mathematics and simulation. Some of the basic packages we use are:
 
 ```{julia}
-using DifferentialEquations, LinearAlgebra, Plots
+using LinearAlgebra # in-built
+using Random # in-built
+using Statistics # in-built
+using Plots
+using DataFrames
+using CSV
+```
 
+We also use other packages along the way.
+
+# Differential Equations
+
+Julia's differential equations package, [DifferentialEquations.jl](https://github.com/SciML/DifferentialEquations.jl), is powerful and sits at the forefront of the the much larger, [SciML](https://sciml.ai/) ecosystem. See the [DifferentialEquations.jl docs](https://docs.sciml.ai/DiffEqDocs/stable/).
+
+Here is a simple physical system, first solved "manually" with a matrix exponential:
+
+```{julia}
 k, b, M = 1.2, 0.3, 2.0
 A = [0 1;
     -k/M -b/M]
@@ -17,11 +32,21 @@ tEnd = 50.0
 tRange = 0:0.1:tEnd
 
 manualSol = [exp(A*t)*initX for t in tRange]
+```
+
+Now using `DifferentialEquations.jl`:
+
+```{julia}
+using DifferentialEquations 
 
 linearRHS(x,Amat,t) = Amat*x
 prob = ODEProblem(linearRHS, initX, (0,tEnd), A)
 sol = solve(prob)
+```
 
+Plotting the solution:
+
+```{julia}
 p1 = plot(first.(manualSol), last.(manualSol),
 	c=:blue, label="Manual trajectory")
 p1 = scatter!(first.(sol.u), last.(sol.u),
@@ -39,9 +64,9 @@ p2 = scatter!([0], [initX[1]],
 plot(p1, p2, size=(800,400), legend=:topright)
 ```
 
-```{julia}
-using DifferentialEquations, Plots
+Here is a non-linear compartmental epidemics model:
 
+```{julia}
 beta, delta, gamma = 0.25, 0.2, 0.1
 initialInfect = 0.025
 println("R0 = ", beta/gamma)
@@ -65,23 +90,20 @@ plot!(sol.t,((x)->x[4]).(sol.u),label = "Removed", c=:yellow,
     xlabel = "Time", ylabel = "Proportion",legend = :top)
 ```
 
+# Simulation of Continuous Time Markov Chain
+
+A similar epidemics model, now stochastic:
+
 ```{julia}
-using Distributions, Random, Plots
-Random.seed!(0)
+using Distributions
 
-beta, delta, gamma = 0.25, 0.4, 0.1
-initialInfect = 0.025
-M = 1000
-I0 = Int(floor(initialInfect*M))
-N = 30
-
-function simulateSIRDoobGillespie(beta,delta,gamma,I0,M,T)
+function simulateSIRDoobGillespie(β ,δ, γ, I0, M, T)
     t, S, E, I, R = 0.0, M-I0, 0, I0, 0
     tValues, sValues, eValues, iValues, rValues = [0.0], [S], [E], [I], [R]
     while t<T
-        infectionRate = beta*I*S
-        symptomRate = delta*E
-        removalRate = gamma*I
+        infectionRate = β*I*S
+        symptomRate = δ*E
+        removalRate = γ*I
         totalRate = infectionRate + symptomRate + removalRate
         probs = [infectionRate, symptomRate, removalRate]/totalRate
         t += rand(Exponential(1/(totalRate)))
@@ -89,23 +111,38 @@ function simulateSIRDoobGillespie(beta,delta,gamma,I0,M,T)
         if u < probs[1]
             S -= 1; E += 1
         elseif u < probs[1] + probs[2]
-            E -=1; I+=1
+            E -=1; I += 1
         else
             I -= 1; R += 1
         end
-        push!(tValues,t)
-        push!(sValues,S);push!(eValues,E);push!(iValues,I);push!(rValues,R)
+        push!(tValues, t)
+        push!(sValues, S); push!(eValues, E); push!(iValues, I); push!(rValues, R)
         I == 0 && break
     end
     return [tValues, sValues, eValues, iValues, rValues]
 end
+```
+
+Now le's simulate it:
+
+```{julia}
+Random.seed!(0)
+
+β, δ, γ = 0.25, 0.4, 0.1
+initialInfect = 0.025
+M = 1000
+I0 = floor(Int, initialInfect*M)
+N = 30
 
 tV,sV,eV,iV,rV = simulateSIRDoobGillespie(beta/M,delta,gamma,I0,M,Inf)
 lastT = tV[end]
 
-finals = [simulateSIRDoobGillespie(beta/M,delta,gamma,I0,M,Inf)[5][end] 
-                for _ in 1:N]/M
+finals = [simulateSIRDoobGillespie(beta/M,delta,gamma,I0,M,Inf)[5][end] for _ in 1:N]/M;
+```
 
+And plot it:
+
+```{julia}
 p1 = plot(tV,sV/M,label = "Susceptible", c=:green)
 plot!(tV,eV/M,label = "Exposed", c=:blue)
 plot!(tV,iV/M,label = "Infected",c=:red)
@@ -116,6 +153,41 @@ scatter!(lastT*1.025*ones(N),finals, c = :yellow,label= "Final Infected")
 ```
 
 # Linear Algebra
+
+Julia provides strong in-built support for Linear Algebra, with syntax somewhat similar to MATLAB. See the [Linear Algebra Documentation](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/).
+
+The in-built linear algebra capabilities are primarily powered by the [BLAS](https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms) (Basic Linear Algebra Subprograms) and [LAPACK](https://en.wikipedia.org/wiki/LAPACK) (Linear Algebra Package) libraries, which are industry-standard, highly optimized libraries for performing core matrix and vector operations as well as advanced factorizations and eigenvalue problems. 
+
+Julia ships with its own [OpenBLAS](https://www.openblas.net/) build by default, but users can swap in other BLAS/LAPACK backends such as [MKL.jl](https://github.com/JuliaLinearAlgebra/MKL.jl) for Intel’s Math Kernel Library, enabling optimized performance on compatible hardware.
+
+```{julia}
+A = [1 2 3; 
+     4 1 6; 
+     7 8 1]
+
+@show det(A)
+@show tr(A)
+@show eigvals(A)
+
+factorize(A)
+```
+
+The `I` matrix can be used freely in most situations:
+
+```{julia}
+A + 100I
+```
+
+Note that Julia matrices are column oriented.
+```{julia}
+a = collect(1:4)
+```
+
+```{julia}
+A = reshape(a, 2, 2)
+```
+
+In some circumstances thinking about column orientation vs. row orientation may affect performance:
 
 ```{julia}
 using BenchmarkTools
@@ -129,6 +201,7 @@ function sum_rows(data, n, m)
     end
     return s
 end
+
 function sum_columns(data, n, m)
     s = zero(eltype(data))
     for j in 1:m
@@ -138,23 +211,36 @@ function sum_columns(data, n, m)
     end
     return s
 end
-using Random
+
 Random.seed!(0)
 n, m = 500, 10^6
 data = rand(n,m)
+
 #dry run for precompilation
 sum_columns(data, n, m)
 sum_rows(data, n, m)
+
 println("Summing with the column iteration moving fastest")
 @btime sum_columns(data, n, m)
+
 println("Summing with the row iteration moving fastest")
 @btime sum_rows(data, n, m);
 ```
 
+## A Variety of Ways for doing least-squares
 
 ```{julia}
-using DataFrames, GLM, Statistics, LinearAlgebra, CSV
-data = CSV.read("../data/L1L2data.csv")
+data = "../data/L1L2data.csv" |> CSV.File |> DataFrame
+```
+
+```{julia}
+using GLM
+
+modelK = glm(@formula(Y ~ X), data, Normal())
+b0K, b1K = coef(modelK)
+```
+
+```{julia}
 xVals, yVals = data[:,1], data[:,2]
 n = length(xVals)
 A = [ones(n) xVals]
@@ -205,17 +291,29 @@ b0I, b1I = b[1], b[2]
 modelJ = lm(@formula(Y ~ X), data)
 b0J, b1J = coef(modelJ)
 
-# Approach K
-modelK = glm(@formula(Y ~ X), data, Normal())
-b0K, b1K = coef(modelK)
 println(round.([b0A,b0B,b0C,b0D,b0E,b0F,b0G,b0H,b0I,b0J,b0K],digits=3))
 println(round.([b1A,b1B,b1C,b1D,b1E,b1F,b1G,b1H,b1I,b1J,b1K],digits=3))
 ```
 
+## Supporting linear algebra packages
+
+Julia provides quite a-lot of linear algebra out of the box. Yet here are some additional packages that are sometimes useful:
+
+* The `SparseArrays` library is in-built. Here is the [documentation](https://docs.julialang.org/en/v1/stdlib/SparseArrays/).
+* [PDMats.jl](https://github.com/JuliaStats/PDMats.jl) for positive definite matrices (often used for covariance matrices).
+* [LinearSolve.jl](https://github.com/SciML/LinearSolve.jl) provides additional fast implementations of linear solving algorithms. See this [discussion](https://discourse.julialang.org/t/a-b-vs-linearsolve-jl-at-juliacon-2022/85030/2).
+* [GenericLinearAlgebra.jl](https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl) provides additional functionality.
+
+
 # Monte Carlo
 
+Here is an example with common random numbers and using RNG (Random Number Generation) objects.
+
+See the [Random Numbers](https://docs.julialang.org/en/v1/stdlib/Random/) section in the Julia docs. Julia uses the [Xorshift](https://en.wikipedia.org/wiki/Xorshift) random number generator as a default. It was [Mersenne Twister
+](https://en.wikipedia.org/wiki/Mersenne_Twister) up to (including Julia 1.6). Good to know also about [`StableRNGs.jl](https://github.com/JuliaRandom/StableRNGs.jl).
+
 ```{julia}
-using Plots, Random, Measures
+using Measures # just helps for plots
 
 function path(rng::AbstractRNG, α::Real, n::Int=5000)
     x = 0.0
@@ -264,8 +362,10 @@ p2 = plot!(path(rng, alpha_range[3]), c = :green, label = "α=$(alpha_range[3])"
 plot(p1, p2, size=(800, 400), margin=5mm)
 ```
 
+Here is an example tht demonsrates a case where multiple RNGs can be of use:
+
 ```{julia}
-using Distributions, Random, Plots, LaTeXStrings
+using LaTeXStrings
 
 N, K, M = 10^2, 50, 10^3
 lamRange = 0.01:0.01:0.99
@@ -613,7 +713,11 @@ scatter!(first.(data[3]),last.(data[3]),c=:green, ms=1,msw=0,label="Exponential"
     xlabel=L"X_1", ylabel=L"X_2")
 ```
 
-```{julia}
+Here is a simple way to create animations. See the [docs](https://docs.juliaplots.org/latest/animations/).
+
+(Currently commented out for speedup in building.)
+
+<!-- ```{julia}
 using Plots
 
 function graphCreator(n::Int)
@@ -643,7 +747,9 @@ function graphCreator(n::Int)
 end
 
 graphCreator(16)
-```
+``` -->
+
+Here are some more "touched up" graphics. Note the use of the in-built [Dates](https://docs.julialang.org/en/v1/stdlib/Dates/) library.
 
 ```{julia}
 using DataFrames, CSV, Statistics, Dates, Plots, Measures
@@ -702,8 +808,11 @@ plot(p1, p2, p3, layout=(1,3), size=(1200,400), xlabel="x", margin=5mm)
 
 # Probability Distributions
 
+The [Distributions](https://github.com/JuliaStats/Distributions.jl) is very rich and orderly. It can be extended quite easily, see for example [Copulas.jl](https://github.com/lrnv/Copulas.jl), also discussed in @LavernyJimenez2024.
+
+Here are some common continuous distributions:
+
 ```{julia}
-using Distributions
 dists = [
     Uniform(10,20),
     Exponential(3.5),
@@ -719,6 +828,8 @@ reshape([dists ;  params.(dists) ;
 		((d)->(minimum(d),maximum(d))).(dists) ],
 		length(dists),3)
 ```
+
+Here are some common discrete distributions:
 
 ```{julia}
 using Distributions
@@ -818,6 +929,14 @@ plot(xGrid, hazardsA, c=Cl, label=reshape(Lb, 1,:), xlabel="x",
 ```
 
 # Automatic Differentiation
+
+There are multiple options for automatic differenation. See also the basic example in Unit 1. Here are key packages:
+
+- [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl): Implements forward-mode automatic differentiation, well-suited for functions with few input variables and many outputs.
+- [ReverseDiff.jl](https://github.com/JuliaDiff/ReverseDiff.jl): Provides reverse-mode (backward-mode) automatic differentiation, ideal for functions with many inputs and few outputs, such as those commonly encountered in machine learning.
+- [Zygote.jl](https://github.com/FluxML/Zygote.jl): Source-to-source automatic differentiation supporting reverse-mode; widely used in the Flux ecosystem and beyond for differentiable programming.
+- [Enzyme.jl](https://github.com/EnzymeAD/Enzyme.jl): High-performance AD using LLVM, supporting both forward and reverse modes, and capable of differentiating lower-level code and some external libraries.
+- [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl): Symbolic computation and differentiation; useful for obtaining analytic derivatives or generating optimized derivative code.
 
 # Additional online resources
 
