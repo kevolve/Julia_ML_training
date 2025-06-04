@@ -36,6 +36,24 @@ format:
                     <a href="../unit5/unit_5.html" style="display: inline-block; padding: 5px 10px">Unit 5</a> 
                 </p>
             </center>
+    include-after-body:
+        text: |
+            <center>
+                <p>
+                    <a href="../index.html" style="display: inline-block; padding: 5px 10px">Welcome</a> 
+                    |
+                    <a href="../unit1/unit_1.html" style="display: inline-block; padding: 5px 10px">Unit 1</a> 
+                    |
+                    <a href="../unit2/unit_2.html" style="display: inline-block; padding: 5px 10px">Unit 2</a> 
+                    |
+                    <a href="../unit3/unit_3.html" style="display: inline-block; padding: 5px 10px">Unit 3</a> 
+                    |
+                    <a href="../unit4/unit_4.html" style="display: inline-block; padding: 5px 10px">Unit 4</a> 
+                    |
+                    <a href="../unit5/unit_5.html" style="display: inline-block; padding: 5px 10px">Unit 5</a> 
+                </p>
+                <br><br><br><br><br>
+            </center>
     self-contained-math: true
     anchor-sections: true
     theme: default

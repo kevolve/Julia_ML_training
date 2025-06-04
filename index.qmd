@@ -36,6 +36,7 @@ This iteration of the workshop runs over three days during June 2025 via videoco
 * [The Julia Fundamentals Path in Pumas](https://tutorials.pumas.ai/#path-1-julia-fundamentals-for-pumas)
 * [The Julia Discourse (forum)](https://discourse.julialang.org/)
 * [The Julia language Slack channel](https://julialang.org/slack/)
+* [Julia GitHub Organizations](https://julialang.org/community/organizations/)
 * Getting help from an LLM is always helpful. 
 
 **Books:** If you are a "book person" you may be interested in the following books: @kochenderfer2019algorithms, @lauwens2019think, @nazarathy2021statistics, and @tureci2025julia. The _Kochenderfer and Wheeler_ book is a great optimization resource using Julia code. _Lauwens and Downey_ is a great introductory coding book using Julia, The _Nazarathy and Klok_ book is a statistics book, also introducing Julia. Finally, the newer _Türeci, Dağıstanlı, and Türk Çakır_ seems to be a good resource, especially for readers with a physics background.

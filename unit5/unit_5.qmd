@@ -372,8 +372,70 @@ draw(plt; axis=(; xlabel="Date", ylabel="Value", title="Time Series"))
 
 # Selected topics from Optimization
 
-* [Optim.jl](https://github.com/JuliaNLSolvers/Optim.jl)
-* [Jump.jl](https://github.com/jump-dev/JuMP.jl)
+Julia is a neat language for optimization. See for example @kochenderfer2019algorithms.
+
+The [JuliaNLSolvers](https://github.com/JuliaNLSolvers) provides a few key packages where we'll focus on [Optim.jl](https://github.com/JuliaNLSolvers/Optim.jl) which is "Univariate and multivariate optimization in Julia". This is unconstrained continuous optimization.
+
+The [Jump.jl](https://github.com/jump-dev/JuMP.jl) package is from a slightly different world of constrained (operations research style) optimization. See @Lubin2023. 
+
+
+## Some Optim.jl examples
+
+
+## A very simple example with JuMP
+
+Let's consider this linear programming problem:
+
+$$
+\begin{align*}
+\text{Maximize} \quad & x + 2y \\
+\text{subject to} \quad & x + y \leq 5 \\
+                       & x \geq 0 \\
+                       & y \geq 0
+\end{align*}
+$$
+
+Here is a manual illustration of this problem:
+
+```{julia}
+vertices_x, vertices_y = [0, 5, 0], [0, 0, 5]
+
+fig = Figure(size = (600, 600))
+ax = Axis(fig[1,1]; xlabel="x", ylabel="y", title="Feasible Region and Objective")
+poly!(ax, vertices_x, vertices_y, color = (:dodgerblue, 0.3), strokecolor=:black, strokewidth=1, label="Feasible Region")
+lines!(ax, [0,5], [5,0], color=:black, linewidth=2, label="x + y = 5")
+lines!(ax, [0,5.5],[0,0], color=:red, linestyle=:dash, label="y = 0")
+lines!(ax, [0,0],[0,5.5], color=:green, linestyle=:dash, label="x = 0")
+for c in 0:2:10
+    xs = 0:0.1:5
+    ys_obj = (c .- xs)./2
+    mask = (ys_obj .>= 0) .& (ys_obj .<= 5)
+    lines!(ax, xs[mask], ys_obj[mask], color=:purple, linestyle=:dot)
+end
+arrows!(ax, [1.0], [2.0], [0.5], [1.0], color = :purple, linewidth=3, arrowsize=20)
+text!(ax, "Objective↑", position = (1.6, 3), color=:purple)
+
+axislegend(ax; position=:rt)
+fig
+```
+
+Now here it is solved using the DSL (domain specific language) ofJuMP. An early blog post about DSLs is [here](https://julialang.org/blog/2017/08/dsl/).
+
+```{julia}
+using JuMP, GLPK
+
+model = JuMP.Model(GLPK.Optimizer)
+
+@variable model x ≥ 0
+@variable model y ≥ 0
+@constraint model x + y ≤ 5
+@objective model  Max (x + 2y)
+
+optimize!(model)
+println("Optimal x = ", value(x))
+println("Optimal y = ", value(y))
+println("Optimal objective value = ", objective_value(model))
+```
 
 # Additional online resources
 
