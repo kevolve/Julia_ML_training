@@ -47,7 +47,7 @@ We hope you enjoy the course and that we can help you come out of it with an app
 ```{julia}
 using Dates
 
-utc_now = now()
-aest_now = utc_now + Hour(12)
-println("Last built: ", Dates.format(aest_now, "yyyy-mm-dd HH:MM"), " (AEST)")
+utc_now = now(UTC)
+aest_now = utc_now + Hour(10)
+println("Last built: ", Dates.format(aest_now, "dd-mm-yyyy HH:MM"), " (AEST)")
 ```
