@@ -3,12 +3,78 @@ title: "Unit 5 - Machine Learning, Statistics, and Optimization"
 engine: julia
 ---
 
+In this unit we explore some deep learning, machine learning, statistics, and optimization libraries in Julia. We also use [Makie](https://docs.makie.org/stable/) as an alternative to the plots used in the previous units.
+
+# Makie and AlgebraOfGraphics
+
+The [AlgebraOfGraphics.jl](https://github.com/MakieOrg/AlgebraOfGraphics.jl) package comes with some data examples:
+
+```{julia}
+using AlgebraOfGraphics
+dat = AlgebraOfGraphics.penguins()
+@show typeof(dat)
+@show keys(dat)
+@show [length(d) for d in dat];
+```
+
+Here is how we plot:
+
+```{julia}
+using CairoMakie
+
+spec =
+    data(dat) *
+    mapping(
+        :bill_length_mm => "Bill length (mm)",
+        :bill_depth_mm => "Bill depth (mm)",
+        color = :species => "Species",
+        row = :sex,
+        col = :island,
+    ) *(visual(Scatter, alpha = 0.3) + linear())
+
+draw(spec)
+```
+
+Here is some Makie code that does not use AoG:
+
+```{julia}
+
+seconds = 0:0.1:2
+measurements = [8.2, 8.4, 6.3, 9.5, 9.1, 10.5, 8.6, 8.2, 10.5, 8.5, 7.2,
+        8.8, 9.7, 10.8, 12.5, 11.6, 12.1, 12.1, 15.1, 14.7, 13.1]
+
+f = Figure()
+ax = Axis(f[1, 1],
+    title = "Experimental data and exponential fit",
+    xlabel = "Time (seconds)",
+    ylabel = "Value",
+)
+scatter!(
+    ax,
+    seconds,
+    measurements,
+    color = :tomato,
+    label = "Measurements"
+)
+lines!(
+    ax,
+    seconds,
+    exp.(seconds) .+ 7,
+    color = :tomato,
+    linestyle = :dash,
+    label = "f(x) = exp(x) + 7",
+)
+axislegend(position = :rb)
+f
+```
+
 # Deep Learning (and a bit of SciML)
 
-* [Flux.jl](https://github.com/FluxML/Flux.jl) [Flux Docs](https://fluxml.ai/Flux.jl/stable/)
-* [Lux.jl](https://github.com/LuxDL/Lux.jl) [Lux Docs](https://lux.csail.mit.edu/stable/)
-* [SimpleChains.jl](https://github.com/PumasAI/SimpleChains.jl)
-* [DiffEqFlux.jl](https://docs.sciml.ai/DiffEqFlux/stable/examples/neural_ode/)
+Julia started with a few deep learning library until [Flux.jl](https://github.com/FluxML/Flux.jl) emerged. See also [Flux Docs](https://fluxml.ai/Flux.jl/stable/). More recently, an alternative, [Lux.jl](https://github.com/LuxDL/Lux.jl) emerged to work better with the [SciML](https://sciml.ai/) ecosystem. See also the [Lux Docs](https://lux.csail.mit.edu/stable/).
+
+Let us also note a very light-weight neural networks package, [SimpleChains.jl](https://github.com/PumasAI/SimpleChains.jl). We'll also use on of the SciML packages, [DiffEqFlux.jl](https://docs.sciml.ai/DiffEqFlux/stable/examples/neural_ode/). See @liquet2024mathematical as an introductory deep learning text.
+
+## Flux example
 
 ```{julia}
 using Flux, Flux.Data.MNIST, Statistics, Random, Plots
@@ -69,51 +135,240 @@ p2 = plot(loss_path,label = false,
 plot(p1,p2,layout=(2,1))
 ```
 
+## Lux Example
+
+## DiffEqFlux Example
+
 # General Machine Learning
 
-* [MLJ - A Machine Learning Framework for Julia](https://juliaai.github.io/MLJ.jl/stable/)
-* [Turing.jl](https://turinglang.org/docs/getting-started/index.html)
-* Older (probably not to use): [ScikitLearn.jl](https://github.com/cstjean/ScikitLearn.jl), [Knet.jl](https://github.com/denizyuret/Knet.jl).
+The main general machine learning package in Julia is [MLJ - A Machine Learning Framework for Julia](https://juliaai.github.io/MLJ.jl/stable/). Less popular, and older (probably not to use) are [ScikitLearn.jl](https://github.com/cstjean/ScikitLearn.jl) and [Knet.jl](https://github.com/denizyuret/Knet.jl).
 
-## A Quick MLJ Tutorial
+MLJ collects hundreds of ML models of other packages under one roof. A brief MLJ intro is [here](https://juliaml.ai/). The [tutorials](https://juliaml.ai/tutorials) page has dozens of worked examples. 
 
-MLJ.jl is Julia's comprehensive machine learning framework that provides a unified interface to hundreds of machine learning models. 
+In MLJ a **model** is an object that only serves as a container for the hyperparameters of the model. A **machine** is an object wrapping both a model and data and can contain information on the trained model; it does not fit the model by itself. However, it does check that the model is compatible with the scientific type of the data and will warn you otherwise.
+
+The [cheatsheet](https://juliaml.ai/mlj-cheatsheet) is also very useful. As our brief introduction to MLJ let's consider a few key elements from the cheatsheet. Follow the [MLJ tutorials](https://juliaml.ai/tutorials) for more detailed examples.
+
+#### See the MLJ version:
 
 ```{julia}
 using MLJ
-using DataFrames
-using Statistics
+MLJ_VERSION
+```
+
+#### Retrieves registry metadata for a specific model:
+
+```{julia}
+info("PCA")
+```
+
+#### Some models are in multiple packages:
+
+```{julia}
+info("RidgeRegressor")
+```
+
+#### So we specify the package:
+
+```{julia}
+info("RidgeRegressor", pkg="MultivariateStats")
+```
+
+#### We can retrieve the model document string for the classifier, without loading model code:
+
+```
+doc("DecisionTreeClassifier", pkg="DecisionTree") # try this yourself
+```
+
+#### List metadata of every registered model:
+
+```{julia}
+models()
+```
+
+#### lists models with a specific phrase in the model or package name:
+
+```{julia}
+models("tree")
+```
+
+#### An example of ingesting data:
+
+```{julia}
+using RDatasets
+channing = dataset("boot", "channing")
+y, X = unpack(channing, ==(:Exit); rng=123)
+```
+
+
+```{julia}
+train, valid, test = partition(eachindex(y), 0.7, 0.2, rng=1234) # for 70:20:10 ratio
+```
+
+#### Machine construction (supervised):
+
+```{julia}
+using NearestNeighborModels
+X, y = make_regression(1_000, 5) # synthetic data for regression
+model = KNNRegressor(K=1)
+mach_supervised = machine(model, X, y)
+```
+
+#### Machine construction (unsupervised):
+
+```{julia}
+model = OneHotEncoder()
+mach_unsupervised = machine(model, X)
+```
+
+#### Fitting a machine (learning)
+
+```{julia}
+fit!(mach_supervised, rows=1:100, verbosity=2, force=false)
 ```
 
 ```{julia}
-X, y = @load_boston
-first(X, 3)
+fit!(mach_unsupervised, rows=1:100, verbosity=2, force=false)
 ```
 
-```{julia}
-# Check data types and summary
-schema(X)
-```
+#### Prediction
 
 ```{julia}
-# Search for available models
-models("DecisionTree")
-```
-
-```{julia}
-# Load a specific model
-Tree = @load DecisionTreeRegressor pkg=DecisionTree
-tree_model = Tree()
+predict(mach_supervised, rows=1:100)
 ```
 
 # Selected topics from Statistics
+
+See the [JuliaStats](https://juliastats.org/) organization. You can also see @nazarathy2021statistics. Let's touch on the following statistics packages:
 
 * [GLM.jl](https://github.com/JuliaStats/GLM.jl)
 * [HypothesisTests.jl](https://github.com/JuliaStats/HypothesisTests.jl)
 * [MixedModels.jl](https://github.com/JuliaStats/MixedModels.jl)
 * [MultivariateStats.jl](https://github.com/JuliaStats/MultivariateStats.jl)
 * [TimeSeries.jl](https://github.com/JuliaStats/TimeSeries.jl)
-* [KernelDensity.jl](https://github.com/JuliaStats/KernelDensity.jl)
+
+## GLM
+
+Here is a basic GLM example:
+
+```{julia}
+using DataFrames, AlgebraOfGraphics, CairoMakie
+using GLM: lm, coef, @formula
+
+# Simulated dataset: Linear relationship
+x = randn(100)
+y = 0.7*x.^2 + 2x .+ 1 + 0.5*randn(100)
+df = DataFrame(x = x, y = y)
+
+# Fit a linear model
+model = lm(@formula(y ~ x + x^2), df)
+coefs = coef(model)
+
+# Predicted line
+xs = range(minimum(df.x), maximum(df.x), length=100)
+ys = coefs[1] .+ coefs[2] .* xs + coefs[3] .* xs.^2
+
+df_pred = DataFrame(x = xs, y = ys)
+
+plt = data(df) * mapping(:x, :y) * visual(Scatter) +
+      data(df_pred) * mapping(:x, :y) * visual(Lines)
+
+draw(plt)
+```
+
+## Hypothesis Tests
+
+```{julia}
+using CSV, Distributions, HypothesisTests
+
+data1 = CSV.read("../data/machine1.csv", header=false, DataFrame)[:,1]
+data2 = CSV.read("../data/machine2.csv", header=false, DataFrame)[:,1]
+xBar1, s1, n1 = mean(data1), std(data1), length(data1)
+xBar2, s2, n2 = mean(data2), std(data2), length(data2)
+delta0 = 0
+
+sP = sqrt( ( (n1-1)*s1^2 + (n2-1)*s2^2 ) / (n1 + n2 - 2) )
+testStatistic = ( xBar1-xBar2 - delta0 ) / ( sP * sqrt( 1/n1 + 1/n2) )
+pVal = 2*ccdf(TDist(n1+n2 -2), abs(testStatistic))
+
+println("Manually calculated test statistic: ", testStatistic)
+println("Manually calculated p-value: ", pVal, "\n")
+println(EqualVarianceTTest(data1, data2, delta0))
+```
+
+```{julia}
+pvalue(EqualVarianceTTest(data1, data2, delta0))
+```
+
+## Mixed Models
+
+```{julia}
+using MixedModels, DataFrames, RDatasets
+
+# Load sleepstudy dataset from lme4 (same as in R)
+df = dataset("lme4", "sleepstudy")
+first(df, 5)
+
+# Fit a linear mixed model:
+# Reaction ~ Days + (Days | Subject)
+# Days: fixed effect, (Days | Subject): random slope/intercept by Subject
+model = fit(MixedModel,
+    @formula(Reaction ~ 1 + Days + (1 + Days | Subject)),
+    df
+)
+
+println(model)
+```
+
+## Multivariate Stats
+
+```{julia}
+# using MultivariateStats,LinearAlgebra,Flux.Data.MNIST
+
+# imgs, labels   = MNIST.images(), MNIST.labels()
+# x = hcat([vcat(float.(im)...) for im in imgs]...)
+# pca = fit(PCA, x; maxoutdim=2)
+# M = projection(pca)
+
+# function compareDigits(dA,dB)
+#     imA, imB = imgs[labels .== dA], imgs[labels .== dB]
+#     xA = hcat([vcat(float.(im)...) for im in imA]...)
+#     xB = hcat([vcat(float.(im)...) for im in imB]...)
+#     zA, zB = M'*xA, M'*xB
+#     default(ms=0.8, msw=0, xlims=(-5,12.5), ylims=(-7.5,7.5),
+#             legend = :topright, xlabel="PC 1", ylabel="PC 2")
+#     scatter(zA[1,:],zA[2,:], c=:red,  label="Digit $(dA)")
+#     scatter!(zB[1,:],zB[2,:], c=:blue, label="Digit $(dB)")
+# end
+
+# plots = []
+# for k in 1:5
+#     push!(plots,compareDigits(2k-2,2k-1))
+# end
+# plot(plots...,size = (800, 500), margin = 5mm)
+```
+
+## Time Series
+
+```{julia}
+using TimeSeries
+using DataFrames
+using AlgebraOfGraphics
+using CairoMakie # or GLMakie
+
+# Make a TimeArray of random data
+dates = Date(2024, 6, 1):Day(1):Date(2024, 6, 10)
+values = randn(length(dates))
+ta = TimeArray(dates, values, ["Value"])
+
+# Convert TimeArray to DataFrame for AlgebraOfGraphics
+df = DataFrame(timestamp = time(ta), value = ta.Value)
+
+# Build the plot
+plt = data(df) * mapping(:timestamp, :value) * visual(Lines)
+
+draw(plt; axis=(; xlabel="Date", ylabel="Value", title="Time Series"))
+```
 
 # Selected topics from Optimization
 
