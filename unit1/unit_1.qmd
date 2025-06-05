@@ -134,7 +134,6 @@ $$
 
 ## Experimenting
 
-
 Let's see it...
 ```{julia}
 # \gamma + [TAB]
@@ -1365,4 +1364,22 @@ QQQQ - Example
 
 # Exercises
 
-...
+1. Consider the `sort` and `sort!` functions.
+    - Read their documentation.
+    - Consider the `by` and `lt` arguments, and try these on an example.
+    - What if you try `sort(["a1", "a2", "a10"])`? Is there a nicer way? Look at [NaturalSort.jl](https://github.com/JuliaStrings/NaturalSort.jl), install it, and try it with `sort(["a1", "a2", "a10"], lt=natural)`.
+1. Compare the following expressions, all of which are the essentially same. For each case investigate how the expression is formed.
+    - `sqrt.(1:9)`
+    - `sqrt.(UnitRange(1,9))`
+    - `sqrt.(collect(1:9))`
+    - `(1:9).^(1/2)`
+    - `map(sqrt, 1:9)`
+    - `map(√, 1:9)`
+    - `[sqrt(i) for i in 1:9]`
+    - `sqrt.((1:9...,))`
+    - `vec(sqrt.(reshape(1:9,3,3)))`
+    - `sqrt.(values(NamedTuple{Tuple(Symbol.("x", 1:9))}(1:9)))`
+    - `exp.(log.(1:9)/2)`
+    - `2 .^(log2.(1:9)/2)`
+1. We've seen the [QuadGK.jl](https://github.com/JuliaMath/QuadGK.jl) package for 1d numerical integration. Now consider the [HCubature.jl](https://github.com/JuliaMath/HCubature.jl) package for multi-dimensional numerical integration. Try to use this package to compute the integral of `f(x::AbstractVector) = exp(x'x/2)` when `x` is a vector of dimensions, 2, 3, and 4, and the integation is over a truncation of all of Euclidean space. Note: You can verify your answer based on the normalizing constant of a multi-variate Gaussian distribution. 
+1. Read the [Julia documentation about functions](https://docs.julialang.org/en/v1/manual/functions/#man-functions). Try out specific examples presented.

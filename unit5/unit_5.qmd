@@ -524,6 +524,8 @@ println("Optimal y = ", value(y))
 println("Optimal objective value = ", objective_value(model))
 ```
 
+JuMP can do much more and interface with state of the art commerical mixed integer linear programming solves. There are many resources available for JuMP. See [Materials for learning JuMP](https://jump.dev/pages/learn/) as a start.
+
 # Additional online resources
 
 * A [Machine Learning Fundamentals](https://tutorials.pumas.ai/html/AIDD/01-machine_learning_fundamentals.html) tutorial by A [PumasAI](https://pumas.ai/).
