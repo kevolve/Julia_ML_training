@@ -62,8 +62,8 @@ println("Symmetric difference and intersection are subsets of the union: ",
 ## Named tuples
 
 ```{julia}
-my_stuff = (age=28, gender=:man, name="Aapeli")
-yonis_stuff = (age=51, gender=:man, name="Yoni")
+my_stuff = (age=28, gender=:male, name="Aapeli")
+yonis_stuff = (age=51, gender=:male, name="Yoni")
 
 my_stuff.gender
 ```
@@ -118,6 +118,19 @@ for c in 0x20:0x7E
 end
 ```
 
+## Regular Expressions
+
+```{julia}
+text = "Julia is fun!"
+pattern = r"Julia"
+occursin(pattern, text)   # true
+```
+
+```{julia}
+text = "Order number: 12345, Qty: 67"
+pattern = r"\d+"
+numbers = collect(m.match for m in eachmatch(pattern, text))
+```
 
 # Dataframes and CSV files - intro
 
@@ -265,5 +278,29 @@ newroot = deserialize("work/tree.dat")
 
 # Exercises
 
-...
+1. You have this dictionary:
+```
+        country_capital = Dict(
+                                "France" => "Paris",
+                                "Germany" => "Berlin",
+                                "Italy" => "Rome",
+                                "Spain" => "Madrid")
+```
+Now create a new dictionary, `capital_country` where the keys are the capital cities and the values are the country names.
+
+2. Looking up with the `in` or `∈` symbol is possible both in an array and a set. You can create an array with `rand(1:10^10, 10^7)` which will have $10^7$ entries, selected from the numbers $1,\ldots,10^{10}$. You can also wrap this to create a set. Now compare lookup timings with `@time` or `@btime` (from BenchmarkTools.jl) for lookup to see if a single `rand(1:10^10)` is an element of the set.
+2. Given the string `text = "Julia is a high-level, high-performance programming language."`, write Julia code to count how many times the substring "high" appears in the text (case-insensitive).
+2. Install the `Rdatasets.jl` package. Then load the "iris" dataset. Then, filter the DataFrame to only include rows where the SepalLength is greater than its mean, and display the first five rows of the result.
+2. Load the "mtcars" dataset from `RDatasets`. Then, group the data by the `Cyl` (number of cylinders) column and compute the average `MPG` (miles per gallon) for each group. Display the resulting summary DataFrame.
+2. Consider this JSON file (put it in a string):
+```
+                {
+                  "name": "Alice",
+                  "age": 30,
+                  "skills": ["Julia", "Python", "SQL"]
+                }
+```
+Given the JSON string above, write Julia code to parse it and print the person's name and the number of skills they have.
+
+7. Create an array of $10^6$ random `Float64` (you can use `rand(Float64, 3)`). Then serialize and inspect the file size. See it makes sense with `sizeof(Float64)`. Now do the same with `Float16`, `Float32`, `UInt8`, and another type of your choice.
 
