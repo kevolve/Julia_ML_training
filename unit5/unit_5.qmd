@@ -374,13 +374,100 @@ draw(plt; axis=(; xlabel="Date", ylabel="Value", title="Time Series"))
 
 Julia is a neat language for optimization. See for example @kochenderfer2019algorithms.
 
-The [JuliaNLSolvers](https://github.com/JuliaNLSolvers) provides a few key packages where we'll focus on [Optim.jl](https://github.com/JuliaNLSolvers/Optim.jl) which is "Univariate and multivariate optimization in Julia". This is unconstrained continuous optimization.
+The [JuliaNLSolvers](https://github.com/JuliaNLSolvers) organization provides a few key packages where we'll focus on [Optim.jl](https://github.com/JuliaNLSolvers/Optim.jl) which is "Univariate and multivariate optimization in Julia". This is unconstrained continuous optimization.
 
 The [Jump.jl](https://github.com/jump-dev/JuMP.jl) package is from a slightly different world of constrained (operations research style) optimization. See @Lubin2023. 
 
 
 ## Some Optim.jl examples
 
+Here is a [Rosenbrock function](https://en.wikipedia.org/wiki/Rosenbrock_function).
+
+$$
+f(x, y) = (1 - x)^2 + 5 \, (y - x^2)^2
+$$
+
+Observe that $f(x,y) \ge 0$ and $f(1,1) = 0$. Hence a minimizer is $(x,y) = (1,1)$.
+
+Here is the function in Julia:
+
+```{julia}
+rosenbrock(x, y) =  (1 - x)^2 + 5(y - x^2)^2
+```
+
+Let's first minimize via the gradient-free [Nelder–Mead method](https://en.wikipedia.org/wiki/Nelder%E2%80%93Mead_method):
+
+```{julia}
+using Optim
+
+# let's make another method
+rosenbrock(x::AbstractVector) = rosenbrock(x...)
+
+result = optimize(rosenbrock, [10.0, 10.0], NelderMead())
+
+println("Gradient-free result:")
+println(" minimizer: ", Optim.minimizer(result))
+println(" minimum value: ", Optim.minimum(result))
+```
+
+Now let's use [BFGS](https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm) which requires gradient information. First what is the gradient? As an illustration let's use [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl)
+
+```{julia}
+using Symbolics
+
+@variables x1 x2
+rosenbrock_expr = (1 - x1)^2 + 10 * (x2 - x1^2)^2
+rosenbrock_gradient_expr = Symbolics.gradient(rosenbrock_expr, [x1, x2])
+```
+
+To see it nicely use [Latexify.jl](https://github.com/korsbo/Latexify.jl):
+
+```{julia}
+using Latexify
+latexify(rosenbrock_gradient_expr)
+```
+
+Here is a Julia function of the gradient using [`build_function`](https://docs.sciml.ai/Symbolics/stable/getting_started/#Building-Functions):
+
+```{julia}
+rosenbrock_gradient = eval(build_function(rosenbrock_gradient_expr, x1, x2)[1])
+methods(rosenbrock_gradient)
+```
+
+```{julia}
+@show rosenbrock_gradient(1, 1) # Needs to be 0 at a minimum
+@show rosenbrock_gradient(1.01, 1.01); # Needs to prbably not be 0
+```
+
+```{julia}
+function rosenbrock_gradient_vec!(storage, x)
+    gx1, gx2 = rosenbrock_gradient(x...)
+    storage[1] = gx1
+    storage[2] = gx2
+end
+
+result = optimize(rosenbrock, rosenbrock_gradient_vec!, [10.0, 10.0], BFGS())
+
+println("Gradient descent minimizer:", Optim.minimizer(result))
+println("Minimum value:", Optim.minimum(result))
+```
+
+Note however that we don't need to supply the gradient if we don't have it. We can just let `optimize` use automatic differenatiation. 
+
+```{julia}
+result = optimize(rosenbrock, [10.0, 10.0], BFGS()) # no gradient given so uses autodiff
+
+println("Gradient descent minimizer:", Optim.minimizer(result))
+println("Minimum value:", Optim.minimum(result))
+```
+
+Note that in all these cases, we can also inspect the result of `optimize`:
+
+```{julia}
+result
+```
+
+Note also that [Optimization.jl](https://github.com/SciML/Optimization.jl) wraps Optim.jl and other packages. See the [Optimization.jl docs](https://docs.sciml.ai/Optimization/stable/).
 
 ## A very simple example with JuMP
 
