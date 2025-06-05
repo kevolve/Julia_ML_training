@@ -991,4 +991,11 @@ These packages are related:
 
 # Exercises
 
-...
+1. Use the `DifferentialEquations.jl` package to solve the nonlinear ordinary differential equation  
+$$
+\frac{dx}{dt} = x  \sin(t) - t * \cos(y),
+$$  
+with the initial condition $y(0) = 1$, over the time interval $t = 0$ to $t = 5$. Plot the solution $y(t)$.
+1. Try to reproduce the SEIR continuous time markov chain simulation using [JumpProcesses.jl](https://github.com/SciML/JumpProcesses.jl).
+1. Explore some of the `LinearAlgebra` functions (`lu`, `qr` `svd`, and `cholesky`). In each case create a suitable matrix, factor it using the function, and reconstruct the matrix from the factorization. 
+1. Use the discrete event simulation engine code provided above to simulation a system of two queues, one after another (a tandem queueing system).
