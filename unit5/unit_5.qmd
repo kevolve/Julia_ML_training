@@ -533,4 +533,41 @@ JuMP can do much more and interface with state of the art commerical mixed integ
 
 # Exercises
 
-...
+1. Consider this dataframe, `df`:
+```
+using DataFrames, Random, Distributions
+
+Random.seed!(123)  # for reproducibility
+
+n = 100
+μ = [5.0, 13.0, -2.0]  # Means for x, y, z
+Σ = [4.0  3.0  1.0;    # 3×3 covariance matrix, making variables correlated
+      3.0  9.0  2.0;
+      1.0  2.0  6.0]
+mvnorm = MvNormal(μ, Σ)
+data = rand(mvnorm, n)
+df = DataFrame(x = data[1, :], y = data[2, :], z = data[3, :])
+```
+Use AlgebraOfGraphics.jl to plot a scatter plot of `y` versus `x`, with the color of the points representing the value of `z`.
+
+2. Consider the example `Flux.jl` code on the [Flux.jl GitHub README](https://github.com/FluxML/Flux.jl). Try to run that code (also replacing `model` with the commented out `model`). Do the plotting with `Makie` instead of `Plots`.
+
+2. Now consider the [Flux quickstart page](https://fluxml.ai/Flux.jl/stable/guide/models/quickstart/). Try and reproduce that code, disabling CUDA if not relevant (if you don't have a CUDA GPU).
+
+2. Move onto `Lux.jl`. Consider the "Native Julia & Zygote" example on the  [Lux.jl GitHub README](https://github.com/LuxDL/Lux.jl) page. Run that example. 
+
+2. Now visit the [examples directory of Lux.jl](https://github.com/LuxDL/Lux.jl/tree/main/examples). Find one or two examples and try to reproduce them.
+
+2. Consider [Lab 8 - Tree-based models](https://juliaai.github.io/DataScienceTutorials.jl/isl/lab-8/) from [DataScienceTutorials.jl](https://github.com/JuliaAI/DataScienceTutorials.jl). Try to reproduce Lab 8. As you can see there are many other tutorials/labs, so if you prefer a different one, carry out that one.
+
+2. Consider the [Incremental Training with MLJFlux](https://fluxml.ai/MLJFlux.jl/dev/common_workflows/incremental_training/notebook/) tutorial. Execute the code in this tutorial.
+
+2. Consider the [Statistics with Julia book code example](https://github.com/h-Klok/StatsWithJuliaBook/blob/master/8_chapter/multiLinReg.jl) dealing with linear regression. Reproduce this code and study the output by inspecting `model`.
+
+2. Go to the [documentation for HypothesisTests.jl](https://juliastats.org/HypothesisTests.jl/stable/). Choose some test that you either know or interests you, and try to run the code on some example data you generate.
+
+2. Reproduce the code from the [MixedModels.jl quickstart](https://juliastats.org/MixedModels.jl/dev/).
+
+2. Study the [tips and tricks of Optim.jl](https://julianlsolvers.github.io/Optim.jl/v0.9.3/user/tipsandtricks/). Try to reproduce some of the code.
+
+2. Study the [Getting started with JuMP](https://jump.dev/JuMP.jl/stable/tutorials/getting_started/getting_started_with_JuMP/) page and try to reproduce the code there.
