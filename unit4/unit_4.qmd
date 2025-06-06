@@ -24,20 +24,57 @@ We now focus on multi-threading, distributed computing, and GPUS. We then attemp
 
 # Multi-threading
 
+This quarto notebook was generated with the flag `-t 8` (or `--threads 8`). It means there are 8 threads available. Without it there is only 1 thread. If you try in the command line `julia --help` you'll see:
+
+```
+ -t, --threads {auto|N[,auto|M]}
+                           Enable N[+M] threads; N threads are assigned to the `default`
+                           threadpool, and if M is specified, M threads are assigned to the
+                           `interactive` threadpool; `auto` tries to infer a useful
+                           default number of threads to use but the exact behavior might change
+                           in the future. Currently sets N to the number of CPUs assigned to
+                           this Julia process based on the OS-specific affinity assignment
+                           interface if supported (Linux and Windows) or to the number of CPU
+                           threads if not supported (MacOS) or if process affinity is not
+                           configured, and sets M to 1.
+```
+
+Let's use the `nthreads` function in runtime to see how many threads there are:
+
 ```{julia}
 Threads.nthreads()
 ```
-<!-- 
-talk about race conditions
 
-`Threads.@threads` for loops... -->
-
+As you look at the output, to get a grasp of when things are executed let's define the `time_stamp` function which returns a time stamp in a resolution of a tenth of a second. Remember that there are `86400` seconds in a day, so expect the values of this function to reach almost up to $10^6$, to be used as a relative timestamp:
 
 ```{julia}
-# Threads.@threads for _ in 1:20
-#     sleep(2)
-#     println("hello from $(Threads.threadid())")
-# end
+using Dates
+
+"""
+Returns how many tenths of seconds passed since midnight
+"""
+function time_stamp()
+    now = Dates.now()
+    midnight = DateTime(Date(now))  # Today at 00:00:00
+    return Millisecond(now - midnight).value ÷ 100
+end;
+```
+
+For basic parallelism, one of the best tools we have is the [`Threads.@threads`](https://docs.julialang.org/en/v1/base/multi-threading/#Base.Threads.@threads) macro. Now since we have 8 threads in our system, observe that this loop essentially runs in three batches.
+
+```{julia}
+before_start = time_stamp()
+Threads.@threads for i in 1:17
+    println(time_stamp(), 
+            " "^(time_stamp()-before_start), # spacing
+            ": Starting iteration $i")
+
+    sleep(1) # sleep for one second as though "processing something"
+
+    println(time_stamp(),
+            " "^(time_stamp()-before_start), # spacing
+             ": Finished sleeping (\"processing\") on thread $(Threads.threadid())")
+end
 ```
 
 ## Example - Simple Number Theory Computation
