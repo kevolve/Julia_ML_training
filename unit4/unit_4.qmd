@@ -153,20 +153,16 @@ scatter(2:2:n, checks, legend=false, xlabel="n", ylabel="Number of Goldbach pair
 # Distributed computing
 
 * [Distributed.jl](https://github.com/JuliaLang/Distributed.jl)
+* [Malt.jl](https://github.com/JuliaPluto/Malt.jl)
 
 # GPUs
 
 * [juliagpu.org](https://juliagpu.org/)
 * [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl)
 
-
-# Example - Differential Equations
-
 # Example - Oceananigans 
 
-
-https://docs.julialang.org/en/v1/manual/getting-started/
-https://docs.julialang.org/en/v1/manual/noteworthy-differences/#Noteworthy-differences-from-Python
+Let's explore the [Oceananigans.jl](https://github.com/CliMA/Oceananigans.jl) package and try to run it both on GPU and on CPU.
 
 # Additional online resources
 
@@ -176,5 +172,7 @@ https://docs.julialang.org/en/v1/manual/noteworthy-differences/#Noteworthy-diffe
 
 # Exercises
 
-1. QQQQ
-1. QQQQ
+1. Carry out the "Multithread the computation of π" exercise [provided here](https://enccs.github.io/julia-for-hpc/multithreading/).
+1. Carry out the "Distribute the computation of π" exercise [provided here](https://enccs.github.io/julia-for-hpc/distributed/).
+1. Carry out the "Port `sqrt_sum()` to GPU" exercise [provided here](https://enccs.github.io/julia-for-hpc/GPU/)
+
