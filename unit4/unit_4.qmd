@@ -1,24 +1,43 @@
 ---
 title: "Unit 4 - Parallel and Fast"
 engine: julia
+julia:
+    exeflags: ["--project=@.", "--threads=8"]
+    author: 
+        - "Aapeli Vuorinen"
+        - "Yoni Nazarathy"
 ---
+
+For decades, computers got faster mainly because chipmakers squeezed more transistors onto chips and raised their clock speeds—this was Moore’s law. But after the early 2000s, increasing clock speeds hit limits due to heat and power. Instead of making a single core faster, CPUs started coming with multiple cores so computers could work on several things at once. GPUs, which were designed for graphics, also became much more powerful and began to be used for general-purpose computing. Now, to speed up programs, we have to use parallel computing across multicore CPUs, GPUs, and even multiple machines working together—this is called distributed computing. See for example the article @sutter2005free.
+
+Julia is well suited for distributed computing, parallel computing, and GPU use. See the overview of [parallel computing](https://docs.julialang.org/en/v1/manual/parallel-computing/) in the Julia documentation. In this unit we deal with several layers of parallelism for speedup: 
+
+1. **Multi-threading** - Use multiple CPU threads to run tasks simultaneously within a single process. See the [docs](https://docs.julialang.org/en/v1/manual/multi-threading/). 
+1. **Distributed Computing** - Use multiple processes, possibly on different machines, to work together on larger problems. See the [docs](https://docs.julialang.org/en/v1/manual/distributed-computing/) as well as [Distributed.jl](https://github.com/JuliaLang/Distributed.jl) and [Malt.jl](https://github.com/JuliaPluto/Malt.jl).
+1. **GPUs** - Harness the massive parallelism of graphics processors for compute-heavy tasks. See [JuliaGPU.org](https://juliagpu.org/).
+
+Combinations of 1, 2, and 3 are obviously possible. 
+
+Note that a related item, also in the Julia documentation is "Asynchronous "tasks", or coroutines". See the [Asynchronous Programming docs](https://docs.julialang.org/en/v1/manual/asynchronous-programming/). 
+
+We now focus on multi-threading, distributed computing, and GPUS. We then attempt to run and example with [Oceananigans.jl](https://github.com/CliMA/Oceananigans.jl) from the [CliMA organization](https://juliapackages.com/u/clima). See the recent preprint @wagner2025high.
 
 # Multi-threading
 
-https://docs.julialang.org/en/v1/manual/multi-threading/
-
-After the GHz wars... Moore's conjecture... CPUs got multiple cores instead of THz
-
+```{julia}
+Threads.nthreads()
+```
+<!-- 
 talk about race conditions
 
-`Threads.@threads` for loops...
+`Threads.@threads` for loops... -->
 
 
 ```{julia}
-Threads.@threads for _ in 1:20
-    sleep(2)
-    println("hello from $(Threads.threadid())")
-end
+# Threads.@threads for _ in 1:20
+#     sleep(2)
+#     println("hello from $(Threads.threadid())")
+# end
 ```
 
 ## Example - Simple Number Theory Computation
