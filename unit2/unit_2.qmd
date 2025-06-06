@@ -3,7 +3,11 @@ title: "Unit 2 - Processing Data"
 engine: julia
 ---
 
+In this unit we focus on "data". We start by considering basic Julia data structures including dictionaries, sets, named tuples, and others. We then then focus on basic text (string) processing in Julia. Then we move onto Dataframes - a general and useful way to keep tabular data. We then touch on JSON files, and serialization.
+
 # Basic data structures
+
+Here are some basic data structures in Julia:
 
 ## Dictionaries
 
@@ -135,7 +139,7 @@ numbers = collect(m.match for m in eachmatch(pattern, text))
 # Dataframes and CSV files - intro
 
 
-Brisbane speed camera locations
+Here is data for brisbane speed camera locations:
 
 ```{julia}
 using HTTP
@@ -159,15 +163,15 @@ simple_table(first(df, 5))
 # simple_table(df)
 ```
 
-speed cameras by suburb vs 
+<!-- speed cameras by suburb vs 
 
-missing data:...
+missing data:... -->
 
 # Dataframes - Transformations
 
-Pumas
+<!-- Pumas
 
-groupby/combine
+groupby/combine -->
 
 # JSON
 

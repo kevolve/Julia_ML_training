@@ -174,5 +174,5 @@ Let's explore the [Oceananigans.jl](https://github.com/CliMA/Oceananigans.jl) pa
 
 1. Carry out the "Multithread the computation of π" exercise [provided here](https://enccs.github.io/julia-for-hpc/multithreading/).
 1. Carry out the "Distribute the computation of π" exercise [provided here](https://enccs.github.io/julia-for-hpc/distributed/).
-1. Carry out the "Port `sqrt_sum()` to GPU" exercise [provided here](https://enccs.github.io/julia-for-hpc/GPU/)
+1. Carry out the "Port `sqrt_sum()` to GPU" exercise [provided here](https://enccs.github.io/julia-for-hpc/GPU/).
 
