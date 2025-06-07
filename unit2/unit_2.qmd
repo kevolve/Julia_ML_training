@@ -378,7 +378,8 @@ newroot = deserialize("work/tree.dat")
 ](https://jkrumbiegel.com/pages/2020-10-31-tuples-and-vectors/).
 * This [introductory post](https://blog.glcs.io/staticarrays) covers [StaticArrays.jl](https://github.com/JuliaArrays/StaticArrays.jl) which is a popular library used in many numerical packages.
 * The book @storopolihuijzeralonso2021juliadatascience is a good resource for DataFrames.  
-* A papper about `DataFrames.jl` made it into the Journal of Statistical Software, @bouchet2023dataframes.
+* A paper about `DataFrames.jl` made it into the Journal of Statistical Software, @bouchet2023dataframes.
+* A nice "cheatsheet" for dataframes [here](https://www.ahsmart.com/assets/pages/data-wrangling-with-data-frames-jl-cheat-sheet/DataFramesCheatSheet_v1.x_rev1.pdf).
 * The book @kaminski2023julia is also written by the main creator of `DataFrames.jl`.
 * This [Pumas `DataFramesMeta.jl` tutorial](https://tutorials.pumas.ai/html/DataWranglingInJulia/05-mutating-dfmeta.html) is useful.
 * See this [Hacker News](https://news.ycombinator.com/item?id=29360221) discussion around [JSON.jl](https://github.com/JuliaIO/JSON.jl) and [JSON3.jl](https://github.com/quinnj/JSON3.jl).
