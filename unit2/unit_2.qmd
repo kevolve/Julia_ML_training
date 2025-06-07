@@ -7,9 +7,11 @@ In this unit we focus on "data". We start by considering basic Julia data struct
 
 # Basic data structures
 
-Here are some basic data structures in Julia:
+Beyond [arrays](https://docs.julialang.org/en/v1/base/arrays/) which are very important and include `Vector` and `Matrix`, here are some basic data structures in Julia:
 
 ## Dictionaries
+
+See [Dictionaries in the Julia docs](https://docs.julialang.org/en/v1/base/collections/#Dictionaries). Here are some examples:
 
 ```{julia}
 pop = Dict()
@@ -38,9 +40,11 @@ pop["North Pole"] = 0.5
 strict_pop["North Pole"] = 0.5
 ```
 
-todo(aapeli): more dict
+<!-- todo(aapeli): more dict -->
 
 ## Sets
+
+See [Set-Like Collections in the Julia docs](https://docs.julialang.org/en/v1/base/collections/#Set-Like-Collections). Here are some examples.
 
 ```{julia}
 A = Set([2,7,2,3])
@@ -65,12 +69,17 @@ println("Symmetric difference and intersection are subsets of the union: ",
 
 ## Named tuples
 
+In addition to tuples (see [docs](https://docs.julialang.org/en/v1/manual/types/#Tuple-Types)), Julia has [named tuples](https://docs.julialang.org/en/v1/manual/types/#Named-Tuple-Types). Here are some examples:
+
+
 ```{julia}
 my_stuff = (age=28, gender=:male, name="Aapeli")
 yonis_stuff = (age=51, gender=:male, name="Yoni")
 
 my_stuff.gender
 ```
+
+Named tuples are also used as [keyword arguments](https://docs.julialang.org/en/v1/manual/functions/#Keyword-Arguments).
 
 
 ```{julia}
@@ -85,14 +94,69 @@ p2 = plot(x->cos(1/x); ylabel=L"\cos(\frac{1}{x})", args...)
 plot(p1, p2, size=(700,300))
 ```
 
+## Structs (Composite Types)
+
+You can obviously define your own types [see composite types in docs](https://docs.julialang.org/en/v1/manual/types/#Composite-Types). You can use `struct` which is by default immutable, or `mutable struct`. In terms of memory management, immutable types sit on the stack while mutable types sit on the heap and require allocations and garbage collection. 
+
+The [Parameters.jl](https://github.com/mauro3/Parameters.jl) package extends the functionality by automatically creating keyword based constructors for struct beyond the default constructors. 
 
 ```{julia}
-using DataStructures
+using Parameters
 
-# todo(aapeli): trie... etc
+@with_kw struct MyStruct
+    a::Int = 6
+    b::Float64 = -1.1
+    c::UInt8
+end
+
+MyStruct(c=4) # call to the constructor created with the @with_kw with a keyword argument
 ```
 
+Another useful macro based modification of the language is with the [Accessors.jl](https://github.com/JuliaObjects/Accessors.jl) package. It allows to update values of structs (immutable) easily by creating a copy without having to copy all other values:
+
+```{julia}
+using Accessors
+
+a = MyStruct(a= 10 ,c=4)
+@show a
+
+b = @set a.c = 0
+@show b;
+```
+
+## Datastructures (not in the standard library)
+
+The [JuliaCollections](https://github.com/JuliaCollections) library provides other data structures. One useful package is [DataStructures.jl
+](https://github.com/JuliaCollections/DataStructures.jl). Let's use for example a heap for [heap sort](https://en.wikipedia.org/wiki/Heapsort) (note that this is only for illustrative purposes. The system's [sort](https://docs.julialang.org/en/v1/base/sort/) will be more efficient).
+
+
+```{julia}
+using Random, DataStructures
+Random.seed!(0)
+
+function heap_sort!(a::AbstractArray)
+    h = BinaryMinHeap{eltype(a)}()
+    for e in a
+        push!(h, e) #This is an O(log n) operation
+    end
+    
+    #Write back onto the original array
+    for i in 1:length(a)
+        a[i] = pop!(h) #This is an O(log n) operation
+    end
+    return a
+end
+
+data = [65, 51, 32, 12, 23, 84, 68, 1]
+heap_sort!(data)
+@show data
+@show heap_sort!(["Finland", "USA", "Australia", "Brazil"]);
+```
+
+
 # Basic text processing
+
+Here are [strings in the julia docs](https://docs.julialang.org/en/v1/manual/strings/). Let's see some examples:
 
 ```{julia}
 x = 2
@@ -136,10 +200,29 @@ pattern = r"\d+"
 numbers = collect(m.match for m in eachmatch(pattern, text))
 ```
 
+## Some extras
+
+The [Printf](https://docs.julialang.org/en/v1/stdlib/Printf/) package is in-built and provides formatted output functions similar to the C standard library.
+
+Strings are related to IO. See the [I/O and Network docs](https://docs.julialang.org/en/v1/base/io-network/). Something quite common is to use `flush(stdout)`.
+
+Sometimes when writing test code we want strings to be approximately equal. For this it is useful to use the [StringDistances.jl](https://github.com/matthieugomez/StringDistances.jl) package.
+
+Consider the [YAML.jl](https://github.com/JuliaData/YAML.jl) package for [YAML files](https://en.wikipedia.org/wiki/YAML).
+
 # Dataframes and CSV files - intro
 
+Dataframes are huge subject. The Julia [Dataframes.jl](https://github.com/JuliaData/DataFrames.jl) package provides functionality similar to [Python pandas](https://en.wikipedia.org/wiki/Pandas_(software)) or [R dataframes](https://www.geeksforgeeks.org/r-data-frames/). Here are the common packages in this ecosystem:
 
-Here is data for brisbane speed camera locations:
+* [DataFrames.jl](https://github.com/JuliaData/DataFrames.jl) - the main dataframes package.
+* [DataFramesMeta.jl](https://github.com/JuliaData/DataFramesMeta.jl) - metaprogramming tools for DataFrames.jl objects.
+* [CSV.jl](https://github.com/JuliaData/CSV.jl) - read and write to CSV files.
+* [CategoricalArrays.jl](https://github.com/JuliaData/CategoricalArrays.jl) - provides tools for working with categorical variables, both with unordered (nominal variables) and ordered categories (ordinal variables), optionally with missing values.
+* [Chain.jl](https://github.com/jkrumbiegel/Chain.jl) - provides a useful macro rewrites a series of expressions into a chain.
+* [XLSX.jl](https://github.com/felipenoris/XLSX.jl) - Excel file reader/writer for the Julia language.
+* [SummaryTables.jl](https://github.com/PumasAI/SummaryTables.jl) - creating publication-ready tables in HTML, docx, LaTeX and Typst formats.
+
+Let's start with example data for brisbane speed camera locations:
 
 ```{julia}
 using HTTP
@@ -169,25 +252,48 @@ missing data:... -->
 
 # Dataframes - Transformations
 
-<!-- Pumas
+Here are key operations:
 
-groupby/combine -->
+- [`groupby`](https://dataframes.juliadata.org/stable/lib/functions/#Base.groupby) – Split a DataFrame into groups by one or more columns.
+- [`combine`](https://dataframes.juliadata.org/stable/man/split_apply_combine/#Combining-results) – Apply functions to groups or columns and combine results in a new DataFrame.
+- [`transform`](https://dataframes.juliadata.org/stable/man/getting_started/#Transforming-data) – Create or modify columns (optionally in-place).
+- [`select`](https://dataframes.juliadata.org/stable/man/getting_started/#Selecting-columns) – Select (and transform) columns, optionally creating new ones.
+
+**With [DataFramesMeta.jl](https://juliadata.github.io/DataFramesMeta.jl/stable/):**
+- [`@subset`](https://juliadata.github.io/DataFramesMeta.jl/stable/macros/#@subset) – Filter rows based on row-wise conditions.
+- [`@select`](https://juliadata.github.io/DataFramesMeta.jl/stable/macros/#@select) – Select or transform columns.
+- [`@transform`](https://juliadata.github.io/DataFramesMeta.jl/stable/macros/#@transform) – Add or modify columns by assignment.
+- [`@combine`](https://juliadata.github.io/DataFramesMeta.jl/stable/macros/#@combine) – Combine results of group operations into a DataFrame.
+
+For more, see the official [DataFrames.jl documentation](https://dataframes.juliadata.org/stable/) and the [DataFramesMeta.jl documentation](https://juliadata.github.io/DataFramesMeta.jl/stable/).
+
+As there are already great resources for this on the web let us go through these resources:
+
+1. [A PumasAI tutorial](https://tutorials.pumas.ai/html/DataWranglingInJulia/05-mutating-dfmeta.html)
+1. [A UQ course tutorial](https://courses.smp.uq.edu.au/MATH2504/2025/lectures_html/lecture-unit-8.html)
 
 # JSON
 
-```{julia}
+There are two competing [JSON](https://en.wikipedia.org/wiki/JSON) libraries: [JSON.jl](https://github.com/JuliaIO/JSON.jl) and [JSON3.jl](https://github.com/quinnj/JSON3.jl). Here is a `JSON.jl` example:
 
+```{julia}
+using HTTP
+using JSON
+
+url = "https://jsonplaceholder.typicode.com/todos/1"  # Example JSON file on the web
+response = HTTP.get(url)
+data = JSON.parse(String(response.body))
+
+println(data)
 ```
 
 # Serialization
 
-* struct (mutable & immutable)
+Julia provides out of the box [serialization](https://docs.julialang.org/en/v1/stdlib/Serialization/). Here is an example. The example is slightly interesting because we also create a tree data structure. 
+
+<!-- * struct (mutable & immutable)
 * write to file
-* read from file
-
-```{julia}
-
-```
+* read from file -->
 
 
 ```{julia}
@@ -215,7 +321,7 @@ function make_children(node::Node, n::Int, friend::Node)
         new_node = Node(friend)
         push!(node.friends, new_node)
     end
-end
+end;
 ```
 
 
@@ -261,8 +367,6 @@ Suppose we now want to save this in a file...
 using Serialization
 serialize("work/tree.dat", root)
 ```
-
-
 
 ```{julia}
 newroot = deserialize("work/tree.dat")
