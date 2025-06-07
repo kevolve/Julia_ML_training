@@ -3,7 +3,7 @@ title: "Unit 2 - Processing Data"
 engine: julia
 ---
 
-In this unit we focus on "data". We start by considering basic Julia data structures including dictionaries, sets, named tuples, and others. We then then focus on basic text (string) processing in Julia. Then we move onto Dataframes - a general and useful way to keep tabular data. We then touch on JSON files, and serialization.
+In this unit we focus on **data**. We start by considering basic Julia data structures including dictionaries, sets, named tuples, and others. We then then focus on basic text (string) processing in Julia. Then we move onto Dataframes - a general and useful way to keep tabular data. We then touch on JSON files, and serialization.
 
 # Basic data structures
 
@@ -15,19 +15,20 @@ See [Dictionaries in the Julia docs](https://docs.julialang.org/en/v1/base/colle
 
 ```{julia}
 pop = Dict()
-pop["Australia"] = 27_809_000
-pop["United States"] = 340_110_988
-pop["Finland"] = 5_700_000
+pop["Australia"] = 27_864_000
+pop["United States"] = 340_111_000
+pop["Finland"] = 5_634_000
 
 pop
 ```
 
+We can restrict the types:
 
 ```{julia}
 strict_pop = Dict{String,Int}()
-strict_pop["Australia"] = 27_809_000
-strict_pop["United States"] = 340_110_988
-strict_pop["Finland"] = 5_700_000
+strict_pop["Australia"] = 27_864_000
+strict_pop["United States"] = 340_111_000
+strict_pop["Finland"] = 5_634_000
 
 strict_pop
 ```

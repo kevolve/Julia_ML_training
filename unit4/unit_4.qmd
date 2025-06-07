@@ -8,7 +8,17 @@ julia:
         - "Yoni Nazarathy"
 ---
 
-For decades, computers got faster mainly because chipmakers squeezed more transistors onto chips and raised their clock speeds—this was Moore’s law. But after the early 2000s, increasing clock speeds hit limits due to heat and power. Instead of making a single core faster, CPUs started coming with multiple cores so computers could work on several things at once. GPUs, which were designed for graphics, also became much more powerful and began to be used for general-purpose computing. Now, to speed up programs, we have to use parallel computing across multicore CPUs, GPUs, and even multiple machines working together—this is called distributed computing. See for example the article @sutter2005free.
+# Motivation
+
+For decades, computers got faster mainly because chipmakers squeezed more transistors onto chips and raised their clock speeds—this was Moore’s law. But after the early 2000s, increasing clock speeds hit limits due to heat and power dissipation limits. In order to get more power into machines, CPU manufacturers instead started putting multiple cores on CPUs: identical and somewhat isolated execution units that can do work independently. In essence, it became harder to make CPUs faster so they just put many on one die.
+
+GPUs, which were designed for graphics, also became much more powerful and began to be used for general-purpose computing.
+
+Now, to speed up programs, we have to use parallel computing across multicore CPUs, GPUs, and even multiple machines working together—this is called distributed computing. See for example the article @sutter2005free.
+
+This brings a whole new set of challenges to writing programs: now we can't just write code that runs linearly in the obvious order, instead we have to come up with algorithms that can be run in parallel and speed up execution by performing different parts on different logical computation units. This brings with it a whole new hoarde of bugs, but also incredible time savings and performance throughput improvements, including even the ability to do computation that would not be possible without them (e.g. training LLMs would never be possible on single-threaded CPUs).
+
+# Overview
 
 Julia is well suited for distributed computing, parallel computing, and GPU use. See the overview of [parallel computing](https://docs.julialang.org/en/v1/manual/parallel-computing/) in the Julia documentation. In this unit we deal with several layers of parallelism for speedup: 
 
@@ -18,13 +28,13 @@ Julia is well suited for distributed computing, parallel computing, and GPU use.
 
 Combinations of 1, 2, and 3 are obviously possible. 
 
-Note that a related item, also in the Julia documentation is "Asynchronous "tasks", or coroutines". See the [Asynchronous Programming docs](https://docs.julialang.org/en/v1/manual/asynchronous-programming/). 
+Note that a related item, also in the Julia documentation is "Asynchronous 'tasks', or coroutines". See the [Asynchronous Programming docs](https://docs.julialang.org/en/v1/manual/asynchronous-programming/). 
 
-We now focus on multi-threading, distributed computing, and GPUS. We then attempt to run and example with [Oceananigans.jl](https://github.com/CliMA/Oceananigans.jl) from the [CliMA organization](https://juliapackages.com/u/clima). See the recent preprint @wagner2025high.
+We now focus on multi-threading, distributed computing, and GPUs. We then attempt to run and example with [Oceananigans.jl](https://github.com/CliMA/Oceananigans.jl) from the [CliMA organization](https://juliapackages.com/u/clima) for ocean simulation. See the recent preprint @wagner2025high.
 
 # Multi-threading
 
-This quarto notebook was generated with the flag `-t 8` (or `--threads 8`). It means there are 8 threads available. Without it there is only 1 thread. If you try in the command line `julia --help` you'll see:
+This quarto notebook was generated with the command line flag `-t 8` (or `--threads 8`). It means there are 8 threads available. Without this flag, Julia starts up with only 1 thread. If you try in the command line `julia --help` you'll see:
 
 ```
  -t, --threads {auto|N[,auto|M]}
@@ -39,13 +49,13 @@ This quarto notebook was generated with the flag `-t 8` (or `--threads 8`). It m
                            configured, and sets M to 1.
 ```
 
-Let's use the `nthreads` function in runtime to see how many threads there are:
+Let's use the `nthreads` function inside Julia to see how many threads there are:
 
 ```{julia}
 Threads.nthreads()
 ```
 
-As you look at the output, to get a grasp of when things are executed let's define the `time_stamp` function which returns a time stamp in a resolution of a tenth of a second. Remember that there are `86400` seconds in a day, so expect the values of this function to reach almost up to $10^6$, to be used as a relative timestamp:
+To help us visualize time of execution, we're going to build a small function, `time_stamp` that computes the number of 10th-seconds since the start of midnight tonight. Remember that there are `86400` seconds in a day, so expect the values of this function to reach almost up to $10^6$. We'll use this as a relative timestamp:
 
 ```{julia}
 using Dates
@@ -60,28 +70,196 @@ function time_stamp()
 end;
 ```
 
-For basic parallelism, one of the best tools we have is the [`Threads.@threads`](https://docs.julialang.org/en/v1/base/multi-threading/#Base.Threads.@threads) macro. Now since we have 8 threads in our system, observe that this loop essentially runs in three batches.
+For basic parallelism, one of the best tools we have is the [`Threads.@threads`](https://docs.julialang.org/en/v1/base/multi-threading/#Base.Threads.@threads) macro. Now since we have 8 threads in our system, observe that this loop essentially runs in three batches (since there are 17 tasks, which is more than 16 but fewer than 24).
 
 ```{julia}
 before_start = time_stamp()
 Threads.@threads for i in 1:17
     println(time_stamp(), 
-            " "^(time_stamp()-before_start), # spacing
-            ": Starting iteration $i")
+            "."^(time_stamp()-before_start), # spacing proportional to elapsed time
+            " Starting iteration $i")
 
-    sleep(1) # sleep for one second as though "processing something"
+  #TODO(uncomment)
+    # sleep(1) # sleep for one second as though "processing something"
 
     println(time_stamp(),
-            " "^(time_stamp()-before_start), # spacing
-             ": Finished sleeping (\"processing\") on thread $(Threads.threadid())")
+            "."^(time_stamp()-before_start), # spacing proportional to elapsed time
+             " Finished sleeping (\"processing\") on thread $(Threads.threadid())")
 end
+```
+
+## Example - Mandelbrot Set
+
+The simplest class of algorithms to parallelize are called *embarrassingly parallel*: those where we are literally doing isolated computations. They are a good place to start to learn about splitting computation apart in Julia.
+
+The *Mandelbrot set* $\mathcal M\subseteq\mathbb{C}$ is the set of numbers $c\in\mathbb{C}$ (in the complex plane) where iterating the function $f_c(z)=z^2+c$ does *not* diverge to infinity (where we start iterating with $z=0$). Clearly for example $0+0i\in\mathcal M$ but $4+0i\not\in\mathcal M$.
+
+More formally we define the Mandelbrot set $\mathcal M$ as follows. Fix $c\in\mathbb{C}$, define $z_0=0$ and set $z_{k+1}=f_c(z_k)=z_k^2+c$. Then $c\in\mathcal M$ if and only if $\limsup_{k\to\infty}|z_k|<\infty$.
+
+For example, at $c=-1+0i$, we have the iterates
+
+1. $z_0=0$,
+2. $z_1=0^2-1=1$,
+3. $z_2=(-1)^2-1=0$,
+4. we hit a loop, and so clearly $z_k$ is bounded. Therefore $-1\in\mathcal{M}$.
+
+On the other hand, at $c=3i$, we have the iterates
+
+1. $z_0=3i$,
+2. $z_1=(3i)^2+3i=3i-9$,
+3. $z_2=(3i-9)^2+3i=72-51i$,
+4. now it's pretty clear that the values will diverge, so $3i\not\in\mathcal{M}$.
+
+Observe that if $|z_n|>2$ at any point, then we are guaranteed that the iterates go to infinity. This helps us simplify our code to compute $\mathcal M$.
+
+We can write a Julia function to compute this as follows:
+
+```{julia}
+function mandelbrot_iter(c::Complex, max_iter::Int=50)::Int
+    # initializes z to the zero element of its type, in this case 0+0i
+    z = zero(c)
+    for i in 1:max_iter
+        z = z*z + c
+        # abs2 computes the square of the absolute value, saves us a tiny bit by not computing the square root
+        if abs2(z) > 4
+            return i
+        end
+    end
+    return max_iter
+end
+```
+
+Here we are outputting the iteration on which the sequence has $|z|>2$, as this will let us make pretty images.
+
+We said earlier that $0+0i\in\mathcal{M}$,
+
+```{julia}
+mandelbrot_iter(0im)
+```
+
+And that $-1+0i\in\mathcal{M}$,
+
+```{julia}
+mandelbrot_iter(-1+0im)
+```
+
+And that $3i\not\in\mathcal{M}$,
+
+```{julia}
+mandelbrot_iter(3im)
+```
+
+Let's now write a function to run it over a grid:
+
+```{julia}
+function compute_mandelbrot(
+    # real (x-axis) values
+    real_range,
+    # imaginary (y-axis) values
+    imag_range,
+    # max iterations per run
+    max_iter::Int
+)::Matrix{Int}
+  # produce the grid of c values
+  c_grid = complex.(real_range', imag_range)
+  # apply mandelbrot_iter to each value of c_grid
+  return mandelbrot_iter.(c_grid, max_iter)
+end
+```
+
+Let's define a box that contains most of $\mathcal M$:
+
+```{julia}
+width, height = 1000, 1000
+
+max_iter = 250;
+```
+
+And run to see see how fast we go:
+
+```{julia}
+using BenchmarkTools
+
+real_range_full = LinRange(-2., 0.5, width)
+imag_range_full = LinRange(-1.25, 1.25, height)
+
+@time my_mb = compute_mandelbrot(real_range_full, imag_range_full, max_iter);
+```
+
+Nice picture:
+
+```{julia}
+using Plots
+
+heatmap(my_mb, size=(500, 500), axis=false, aspect_ratio=:equal, colorbar_title="Iterations until provable divergence")
+```
+
+Zoom in on the top part
+
+```{julia}
+real_range_top = LinRange(-.3, .1, width)
+imag_range_top = LinRange(.6, 1, height)
+
+@time my_mb_top = compute_mandelbrot(real_range_top, imag_range_top, max_iter);
+heatmap(my_mb_top, size=(500, 500), axis=false, aspect_ratio=:equal, colorbar_title="Iterations until provable divergence")
+```
+
+# GPUs
+
+## History of GPGPU
+
+GPGPU stands for General Purpose GPU computing: originally GPUs were built for and only really good for "accelerating graphical workflows": texture mapping, shading, rendering polygons and such for gaming and professional applications (CAD, architecture, rendering, etc). They were highly optimized for doing these kinds of computations, which often involved computing small matrix multiplications over and over again. GPU performance was measured in things polygons per second (which is a bit of a nonsensical measure). See @vuduc2013brief.
+
+Around the early 2000s, some hackers and researched started coming up with novel ways of using GPUs for non-graphics applications. These worked largely by writing custom *pixel shaders* that were supposed to give graphical programs the ability to write very restrictive, but general code to manipulate fragments of textures and bitmaps. These applications creatively abused the graphics pipelines to do simple parallel computations. For example:
+
+* **2001**: Martin Rumpf et al. from University of Duisburg used GPUs to solve FEM calculations (@rumpf2001using)
+* **2003**: Mark Harris et al. from UNC used GPUs to simulate cloud dynamics (@harris2003simulation);
+* **2005**: Nico Galoppo et al, from UNC used GPUs to solve linear systems (@galoppo2005lu);
+* **2004**: Debra Cook et al. from Columbia used GPUs for speeding up cryptography (@cook2006cryptographics); and
+* **2004**: Ian Buck et al. from Stanford created *Brook*, an early start at programming GPUs, introduced *kernels* directly compiled by a custom compiler for the GPU (@buck2004brook).
+
+Buck in particular showed through Brook (during his PhD) that it's possible to implement operations like linear algebra and FFT on GPUs with his methodology. He quickly got hired by NVIDIA and was one of the core individuals who created CUDA.
+
+The stats on the number of floating point operations (FLOPs) a GPU could do compared to a CPU made it a very attractive platform for early research. This was directly enabled by the parallelism story on GPUs compared to CPUs -- they were parallel from the beginning. A 2003 article from the magazine *Computer* states "The new GPUs are very fast. Stanford's Ian Buck calculates that the current GeForce FX 5900’s performance peaks at 20 Gigaflops, the equivalent of a 10-GHz Pentium", from @macedonia2003gpu (the whole article is a very interesting read).
+
+The cryptoanalysis and hacker communities also used GPUs for computing rainbow tables and bruteforcing passwords and hash pre-images^[It's not entirely clear how widespread the use of GPUs was for cracking cryptosystems before the introduction of CUDA (after which it exploded). There were certainly examples and it was a budding technique in the community, but I couldn't find concrete and widely used examples to cite.]. This was exacerbated by the [Crypto Wars](https://en.wikipedia.org/wiki/Crypto_Wars): futile efforts by the United States government to limit the availability strong encryption to the general public and in export products (cryptography is still classified as a dual-use technology and its exports are heavily restricted). The new availability of highly-parallel hardware combined with new ideas around this time made for practically feasible attacks on widely deployed cryptosystems, such as cracking passwords in networked Microsoft operating systems (e.g. LAN Manager), cracking early WiFi encryption (WEP, and later WPA), and breaking commonly used hashes (such as the abysmal MD5). Cryptography (and laws around cryptography) have come a long way since then.
+
+## A crash course to modern NVIDIA architectures
+
+## CUDA.jl
+
+Julia makes it *extremely* simple to get stuff running on a GPU with CUDA.jl. Let's see an example
+
+```{julia}
+# this might take a moment
+using CUDA
+
+# CUDA.@time is needed to synchronize GPU data to make sure we time everything
+CUDA.@time cuda_mb = compute_mandelbrot(CuArray(real_range_full), CuArray(imag_range_full), max_iter);
+
+heatmap(cuda_mb, size=(500, 500), axis=false, aspect_ratio=:equal, colorbar_title="Iterations until provable divergence")
+```
+
+And the top part:
+
+```{julia}
+# the first run is normally slow due to compiling, this run should be much much faster
+CUDA.@time cuda_mb_top = compute_mandelbrot(CuArray(real_range_top), CuArray(imag_range_top), max_iter);
+
+heatmap(cuda_mb_top, size=(500, 500), axis=false, aspect_ratio=:equal, colorbar_title="Iterations until provable divergence")
 ```
 
 ## Example - Simple Number Theory Computation
 
-The [Goldbach Conjecture](https://en.wikipedia.org/wiki/Goldbach%27s_conjecture):
+The [Goldbach Conjecture](https://en.wikipedia.org/wiki/Goldbach%27s_conjecture) is the following conjecture:
 
-```{julia}
+> Every positive even integer can be written as the sum of two primes.
+
+Originally posed as far back as 1742, it's still a conjecture: it has not been proven to be true. However, people have verified it's true for ridiculously large inputs (e.g. greater than $10^18$).
+
+Here is both a slow implementation (using a single core) as well as a fast implementation.
+
+```{julia}; eval=false
 using BenchmarkTools
 using Plots
 
@@ -143,11 +321,12 @@ end
 # Test the implementation
 @assert check_Goldbachs_slow(100) == check_Goldbachs(100)
 
-n = 10^4#1_000_000
+n = 10_000 # 1_000_000
 checks = @btime check_Goldbachs(n)
 
 scatter(2:2:n, checks, legend=false, xlabel="n", ylabel="Number of Goldbach pairs", markersize=0.1)
 ```
+
 
 
 # Distributed computing
