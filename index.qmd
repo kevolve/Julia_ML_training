@@ -1,4 +1,5 @@
 ---
+title: "AIMS: Julia Language Workshop by Accumulation Point"
 engine: julia
 bibliography: ./references.bib
 format:
