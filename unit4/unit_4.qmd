@@ -156,7 +156,7 @@ function compute_mandelbrot(
     # real (x-axis) values
     real_range,
     # imaginary (y-axis) values
-    imag_range,
+    imag_range;
     # max iterations per run
     max_iter::Int
 )::Matrix{Int}
@@ -170,7 +170,7 @@ end
 Let's define a box that contains most of $\mathcal M$:
 
 ```{julia}
-width, height = 1000, 1000
+width, height = 1500, 1500
 
 real_range_full = LinRange(-2., 0.5, width)
 imag_range_full = LinRange(-1.25, 1.25, height)
@@ -181,8 +181,16 @@ And run to see see how fast we go:
 ```{julia}
 using BenchmarkTools
 
-@time my_mb = compute_mandelbrot(real_range_full, imag_range_full, max_iter=50);
+@time my_mb = compute_mandelbrot(real_range_full, imag_range_full, max_iter=100);
 ```
+
+Run it a second time to get a clean time
+
+```{julia}
+@time my_mb = compute_mandelbrot(real_range_full, imag_range_full, max_iter=100);
+```
+
+On my machine, this takes about 0.155540 seconds.
 
 Nice picture:
 
@@ -201,6 +209,45 @@ imag_range_top = LinRange(.6, 1, height)
 @time my_mb_top = compute_mandelbrot(real_range_top, imag_range_top, max_iter=250);
 heatmap(my_mb_top, size=(500, 500), axis=false, aspect_ratio=:equal, colorbar_title="Iterations until provable divergence")
 ```
+
+## Making it faster with threads
+
+TODO(aapeli): write
+
+```{julia}
+function compute_mandelbrot_multithreaded(
+    # real (x-axis) values
+    real_range,
+    # imaginary (y-axis) values
+    imag_range;
+    # max iterations per run
+    max_iter::Int
+)::Matrix{Int}
+  # produce the grid of c values
+  c_grid = complex.(real_range', imag_range)
+  # output array
+  out = zeros(Int64, size(c_grid))
+  # note the @threads annotation
+  Threads.@threads for i in eachindex(out)
+    out[i] = mandelbrot_iter(c_grid[i], max_iter)
+  end
+  return out
+end
+
+@time mt_mb = compute_mandelbrot_multithreaded(real_range_full, imag_range_full, max_iter=100);
+```
+
+Run it a second time to get a clean time
+
+```{julia}
+@time mt_mb = compute_mandelbrot_multithreaded(real_range_full, imag_range_full, max_iter=100);
+```
+
+On my machine, this takes about 0.046682 seconds, about 3.3x as fast as the original one.
+
+## More multithreading
+
+TODO(aapeli): more more more
 
 # GPUs
 
@@ -233,19 +280,35 @@ Julia makes it *extremely* simple to get stuff running on a GPU with CUDA.jl. Le
 using CUDA
 
 # CUDA.@time is needed to synchronize GPU data to make sure we time everything
-CUDA.@time cuda_mb = compute_mandelbrot(CuArray(real_range_full), CuArray(imag_range_full), max_iter);
+CUDA.@time cuda_mb = compute_mandelbrot(CuArray(real_range_full), CuArray(imag_range_full), max_iter=100);
 
 heatmap(cuda_mb, size=(500, 500), axis=false, aspect_ratio=:equal, colorbar_title="Iterations until provable divergence")
 ```
+
+Run it a second time to get a clean time
+
+```{julia}
+CUDA.@time cuda_mb = compute_mandelbrot(CuArray(real_range_full), CuArray(imag_range_full), max_iter=100);
+```
+
+On my machine, this takes about 0.005708 seconds, 27.2x faster than singlethreaded CPU.
 
 And the top part:
 
 ```{julia}
 # the first run is normally slow due to compiling, this run should be much much faster
-CUDA.@time cuda_mb_top = compute_mandelbrot(CuArray(real_range_top), CuArray(imag_range_top), max_iter);
+CUDA.@time cuda_mb_top = compute_mandelbrot(CuArray(real_range_top), CuArray(imag_range_top), max_iter=250);
 
 heatmap(cuda_mb_top, size=(500, 500), axis=false, aspect_ratio=:equal, colorbar_title="Iterations until provable divergence")
 ```
+
+## Recap of Mandelbrot timings
+
+Execution mode      | Time (msec) | Speedup
+--------------------|-------------|--------
+CPU (single thread) | 155.54      | 1x
+CPU (multithreaded) | 46.68       | 3.3x
+GPU (CUDA)          | 5.71        | 27.2x
 
 ## Example - Simple Number Theory Computation
 

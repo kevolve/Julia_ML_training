@@ -57,6 +57,7 @@ format:
     self-contained-math: true
     anchor-sections: true
     theme: default
+    respect-user-color-scheme: true
     toc: true
     toc-depth: 1
     toc-expand: 2
