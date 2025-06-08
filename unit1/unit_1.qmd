@@ -81,6 +81,8 @@ You can get help for a function by typing `? maximum` in the REPL or in Jupyter.
 
 Related built-in functions that may be of interest are `findmax`, `argmax`, and `max`. Similarly there are counterparts for `min` in place of max (`minimum`, `findmin`, `argmin`, and `min`). There is also `minmax`, and `extrema`. Look at the help for some of these functions and try some of the examples.  
 
+Here is the [control flow section](https://docs.julialang.org/en/v1/manual/control-flow/) in the Julia docs. And just as an example here are the docs for [`maximum`](https://docs.julialang.org/en/v1/base/collections/#Base.maximum).
+
 ## Some fun probability
 
 Let's see how many times we get a new record while scanning for the maximum.
@@ -151,7 +153,7 @@ h(n) = sum(1/i for i in 1:n)
 approx_h(n) = log(n) + MathConstants.γ
 
 for n in 1:10
-    println(n, "\t", round(h(n), digits = 4), "\t", round(approx_h(n), digits = 4) )
+    println(n, "\t", round(h(n), digits = 4), "\t\t", round(approx_h(n), digits = 4) )
 end
 
 
@@ -196,7 +198,7 @@ histogram(records, xticks = 1:maximum(records), nbins = maximum(records),
 # About Julia
 
 - **Origins and History**
-  - Julia was conceived in 2009 by Jeff Bezanson, Stefan Karpinski, Viral B. Shah, and Alan Edelman and first publicly released in 2012.
+  - [Julia](https://en.wikipedia.org/wiki/Julia_(programming_language)) was conceived in 2009 by Jeff Bezanson, Stefan Karpinski, Viral B. Shah, and Alan Edelman and first publicly released in 2012.
   - Born out of a dissatisfaction with existing technical computing languages for scientific and numerical computing.
   - Built with the promise to be “as fast as C, as easy as Python, as flexible as Ruby, and as powerful for statistics as R.”
 
@@ -221,7 +223,7 @@ histogram(records, xticks = 1:maximum(records), nbins = maximum(records),
 * [The Julia Language Slack](https://julialang.org/slack/)
 * [Julia Discourse](https://discourse.julialang.org/)
 
-**Special Domains:**
+**Special Domains (a few examples):**
 
 * Operations Research: [JUMP](https://jump.dev/)
 * Scientific Machine Learning: [SciML](https://sciml.ai/)
@@ -230,13 +232,16 @@ histogram(records, xticks = 1:maximum(records), nbins = maximum(records),
 * Climate modelling: [CliMA](https://clima.caltech.edu/)
 * GPUs: [JuliaGPU](https://juliagpu.org/)
 
-**Companies:**
+**Some example Companies that rely on Julia:**
 
 * JuliaHub (used to be "Julia Computing"): [juliahub.com](https://juliahub.com/)
 * PumasAI: [pumas.ai](https://pumas.ai/)
 * Fugro Roames: [case study](https://juliahub.com/industries/case-studies/fugro-roames-ml)
+* More in Brisbane Australia: [Elara AI](https://elaraai.com/), [PlotLogic](https://www.plotlogic.com/)
 
 # Where to run Julia
+
+In this course we will probably use [Jupyter notebooks](https://jupyter.org/) because we like them. We'll commit any meaningful computations that we carry out to the [course repo](https://github.com/open-AIMS/Julia_ML_training). Many in the Julia community prefer [Pluto.jl](https://plutojl.org/), and certainly use VS-code (as we do to). Here is a list of key ways to run Julia:
 
 ## Shell
 
@@ -280,6 +285,8 @@ At the prompt:
 
 Useful function for running code: `include`. Try: `include("temp.jl")`. Related are the `using` and `import` keywords.
 
+Here are the [docs](https://docs.julialang.org/en/v1/stdlib/REPL/) for the REPL. Here is a [3 hr Workshop Video](https://www.youtube.com/watch?v=bHLXEUt5KLc) about the Julia REPL (probably a bit longer than most people are willing to spend). The REPL is also configurable and a popular package for "improving" it is [OhMyREPL.jl](https://github.com/KristofferC/OhMyREPL.jl). There is also a [RemoteREPL.jl](https://github.com/JuliaWeb/RemoteREPL.jl) package for connecting to a remote Julia process!
+
 ## Visual Studio Code
 
 The Julia extension makes VS Code a great Julia IDE (integrated development environment). Not quite R-Studio, but close.
@@ -310,6 +317,8 @@ The Julia extension makes VS Code a great Julia IDE (integrated development envi
 - **Step over (in debug mode):** `F10`
 - **Step into (in debug mode):** `F11`
 - **Continue (in debug mode):** `F5`
+
+This [25 minute tutorial YouTube video](https://www.youtube.com/watch?v=IdhnP00Y1Ks) is slightly dated, but still does a great job to showcase what Julia VS-Code can do.
 
 ## Jupyter
 
@@ -357,23 +366,25 @@ julia> using Pluto
 
 A modern R-markdown style environment. Used to make this course!  Has good Julia integration. See for example the [Pumas Tutorials](https://tutorials.pumas.ai/) that make extensive use of Quarto.
 
-A related legacy framework is [Weave.jl](https://github.com/JunoLab/Weave.jl).
+A related legacy framework is [Weave.jl](https://github.com/JunoLab/Weave.jl). For example this [UQ Julia Course](https://courses.smp.uq.edu.au/MATH2504/2024/lectures_html/lecture-unit-1.html) used Weave.jl.
 
 ## JuliaHub
 
 [JuliaHub](https://juliahub.com/), formerly called "Julia Computing", is the "Julia company" led by the creators of the language. The JuliaHub platform is a cloud based platform where you can run Julia and have access to compute power. For example one of the companies that use Julia, [PumasAI](https://pumas.ai/), have their main Pumas platform hosted on JuliaHub. As a private end user you can also get access to JuliaHub and this may be one way to get (paid) GPU access.
 
+Here is a [video](https://www.youtube.com/watch?v=XHsRsllpvqU) showcasing JuliaHub. Also here is a [Pumas Onboarding video](https://www.youtube.com/watch?v=ERfhrnKX4mQ) which can serve as an example of what JuliaHub looks like when integrated for a specific application such as Pumas. 
+
 ## Integrations
 
-You can also run Julia through Python and R via their language interfaces. We discuss this method later in this Unit.
+You can also run Julia through Python and R via their language interfaces. We discuss this method later in this Unit. Note also that JuliaHub provides R-Studio.
 
 # The Package Manager
 
-Like most other modern langauges, Julia comes with a powerful package manager, allowing you to install various libraries and modules for different use cases.
+Like most other modern languages, Julia comes with a powerful package manager, allowing you to install various libraries and modules for different use cases. Here are the [docs](https://pkgdocs.julialang.org/v1/). This [long YouTube tutorial](https://www.youtube.com/watch?v=uiQpwMQZBTA) also focuses on the Package Manager.
 
 There are two ways to use the package manager, via the REPL and using the `Pkg` package.
 
-**Installing packages via the REPL**: Start the repl with `julia`, then type `]` at the `julia>` prompt. This will change the prompt to say `(@vX.X) pkg>` where `vX.X` is the Julia version, indicating that you are in *package management mode*. You can now issue package management commands, such as `add`, `activate`, `instantiate`, etc. Tab works for autocomplete. You can try this out with the `status` command.
+**Installing packages via the REPL**: Start the REPL with `julia`, then type `]` at the `julia>` prompt. This will change the prompt to say `(@vX.X) pkg>` where `vX.X` is the Julia version, indicating that you are in *package management mode*. You can now issue package management commands, such as `add`, `activate`, `instantiate`, etc. Tab works for autocomplete. You can try this out with the `status` command.
 
 To exit package management mode and return to the Julia prompt, simply press backspace or `Ctrl+C`.
 
@@ -386,7 +397,7 @@ Pkg.status()
 
 ## Environment/package management in Julia
 
-Like is common with modern languages, Julia's package manager is usually used with isolated *environments* that are self-contained sets of dependencies for your projects. Each project or library has its own environment, managed independent of others, which prevents conflicts (e.g. between different projects that might require different versions of the same package).
+Like is common with modern languages, Julia's package manager is usually used with isolated *environments* that are self-contained sets of dependencies for your projects. Each project or library has its own environment, managed independent of others, which prevents conflicts (e.g. between different projects that might require different versions of the same package). 
 
 ### The Basics
 
@@ -463,6 +474,8 @@ using Pkg
 # If none exists, it initializes a new one.
 Pkg.activate(".")
 ```
+
+Note also the Julia functions `pwd()`, `cd()`, `readdir()`, and the macro `@__DIR__`. You can look a the help for these and related filesystem functions [here](https://docs.julialang.org/en/v1/base/file/). Note also that you can change to shell in the REPL and then change directory via `;`.
 
 ### `Project.toml` and `Manifest.toml`
 
@@ -553,7 +566,9 @@ In essence, Julia's `Project.toml` and `Manifest.toml` combined with `Pkg.instan
 
 # Story: Computing Square Roots (multiple dispatch, types, LLVM)
 
-The `sqrt` function computes square roots.
+Let us now go through a "story" which happens to be computation of square roots (not too complex). As we explore this story we'll explore various aspects of the language, and surely get sidetracked as well, all with a goal of finding out more about Julia.
+
+The `sqrt` function computes square roots. Look at its help entry via `? sqrt`
 
 ```{julia}
 sqrt(25)
@@ -605,7 +620,7 @@ using InteractiveUtils
 @which sqrt(π*im) #\pi + [Tab]
 ```
 
-What if we wanted to apply square root to several/many elements together? It is common to use the `.` broadcast operator.
+What if we wanted to apply square root to several/many elements together? It is common to use the `.` broadcast operator. Here it is in the [docs](https://docs.julialang.org/en/v1/manual/arrays/#Broadcasting).
 
 ```{julia}
 data = [i^2 for i in 0:10]
@@ -876,6 +891,8 @@ bitstring(-1/0) #-Inf
 
 
 # Story: Computing Factorials (special functions, big numbers, more on types)
+
+Let's move to another "story", this time factorials.
 
 A few basic ways to compute $10! = 1\cdot 2 \cdot \ldots \cdot 10$:
 
@@ -1367,6 +1384,7 @@ QQQQ - Example
 
 * See this [Blog post about the package manager](https://jkrumbiegel.com/pages/2022-08-26-pkg-introduction/) by [Julius Krumbiegel
 ](https://github.com/jkrumbiegel).
+* See this [YouTube video](https://www.youtube.com/watch?v=4YhYHZbpkys) which nicely outlines how Julia compilation works.
 * Some of the materials in this unit are motivated by a University of Queensland Course, [Programming of Simulation, Analysis, and Learning (Data) Systems](https://courses.smp.uq.edu.au/MATH2504/). The course website for that course contains many more materials of this nature.
 * Integration with Wolfram Mathematica is via [MathLink.jl](https://github.com/JuliaInterop/MathLink.jl).
 * Calling C or Fortran directly within Julia is in-built. See the [documentation](https://docs.julialang.org/en/v1/manual/calling-c-and-fortran-code/).
