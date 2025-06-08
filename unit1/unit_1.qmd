@@ -359,6 +359,10 @@ A modern R-markdown style environment. Used to make this course!  Has good Julia
 
 A related legacy framework is [Weave.jl](https://github.com/JunoLab/Weave.jl).
 
+## JuliaHub
+
+[JuliaHub](https://juliahub.com/), formerly called "Julia Computing", is the "Julia company" led by the creators of the language. The JuliaHub platform is a cloud based platform where you can run Julia and have access to compute power. For example one of the companies that use Julia, [PumasAI](https://pumas.ai/), have their main Pumas platform hosted on JuliaHub. As a private end user you can also get access to JuliaHub and this may be one way to get (paid) GPU access.
+
 ## Integrations
 
 You can also run Julia through Python and R via their language interfaces. We discuss this method later in this Unit.
