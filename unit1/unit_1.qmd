@@ -3,6 +3,12 @@ title: "Unit 1 - Your first day with the Julia language"
 engine: julia
 ---
 
+Welcome to "your first day" with the Julia language. Hopefully this unit will also be instructive if this is your second, or third, or 50th day with Julia. Still, we take an approach of zero experience with Julia.
+
+We start with installation. We then explore basic Julia code on a simple example. Then after we survey the past and present of Julia we explore all the modes in which you can run Julia. We then move onto the package manager. Every unit has its own **Julia environment** and so does this one. So we explore that environment and more. We then use two simple mathematical stories, square roots, and factorials, as a means to explore some language features and peculiarities. In particular, we wish to explore [Julia types](https://docs.julialang.org/en/v1/manual/types/) and the key property of [Julia multiple dispatch of methods](https://docs.julialang.org/en/v1/manual/methods/). We then close by exploring integration with R and Python.
+
+As you work through this unit/day. It is good to keep your work in the `work` folder under `unit1`. Enjoy.
+
 # Installation
 
 The recommended way to install Julia is using [JuliaUp](https://github.com/JuliaLang/juliaup).
