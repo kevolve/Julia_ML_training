@@ -172,7 +172,8 @@ Let's define a box that contains most of $\mathcal M$:
 ```{julia}
 width, height = 1000, 1000
 
-max_iter = 250;
+real_range_full = LinRange(-2., 0.5, width)
+imag_range_full = LinRange(-1.25, 1.25, height)
 ```
 
 And run to see see how fast we go:
@@ -180,10 +181,7 @@ And run to see see how fast we go:
 ```{julia}
 using BenchmarkTools
 
-real_range_full = LinRange(-2., 0.5, width)
-imag_range_full = LinRange(-1.25, 1.25, height)
-
-@time my_mb = compute_mandelbrot(real_range_full, imag_range_full, max_iter);
+@time my_mb = compute_mandelbrot(real_range_full, imag_range_full, max_iter=50);
 ```
 
 Nice picture:
@@ -194,13 +192,13 @@ using Plots
 heatmap(my_mb, size=(500, 500), axis=false, aspect_ratio=:equal, colorbar_title="Iterations until provable divergence")
 ```
 
-Zoom in on the top part
+Zoom in on the top part with some more iterations
 
 ```{julia}
 real_range_top = LinRange(-.3, .1, width)
 imag_range_top = LinRange(.6, 1, height)
 
-@time my_mb_top = compute_mandelbrot(real_range_top, imag_range_top, max_iter);
+@time my_mb_top = compute_mandelbrot(real_range_top, imag_range_top, max_iter=250);
 heatmap(my_mb_top, size=(500, 500), axis=false, aspect_ratio=:equal, colorbar_title="Iterations until provable divergence")
 ```
 
@@ -222,7 +220,7 @@ Buck in particular showed through Brook (during his PhD) that it's possible to i
 
 The stats on the number of floating point operations (FLOPs) a GPU could do compared to a CPU made it a very attractive platform for early research. This was directly enabled by the parallelism story on GPUs compared to CPUs -- they were parallel from the beginning. A 2003 article from the magazine *Computer* states "The new GPUs are very fast. Stanford's Ian Buck calculates that the current GeForce FX 5900’s performance peaks at 20 Gigaflops, the equivalent of a 10-GHz Pentium", from @macedonia2003gpu (the whole article is a very interesting read).
 
-The cryptoanalysis and hacker communities also used GPUs for computing rainbow tables and bruteforcing passwords and hash pre-images^[It's not entirely clear how widespread the use of GPUs was for cracking cryptosystems before the introduction of CUDA (after which it exploded). There were certainly examples and it was a budding technique in the community, but I couldn't find concrete and widely used examples to cite.]. This was exacerbated by the [Crypto Wars](https://en.wikipedia.org/wiki/Crypto_Wars): futile efforts by the United States government to limit the availability strong encryption to the general public and in export products (cryptography is still classified as a dual-use technology and its exports are heavily restricted). The new availability of highly-parallel hardware combined with new ideas around this time made for practically feasible attacks on widely deployed cryptosystems, such as cracking passwords in networked Microsoft operating systems (e.g. LAN Manager), cracking early WiFi encryption (WEP, and later WPA), and breaking commonly used hashes (such as the abysmal MD5). Cryptography (and laws around cryptography) have come a long way since then.
+The cryptoanalysis and hacker communities also used GPUs for computing rainbow tables and bruteforcing passwords and hash pre-images^[It's not entirely clear how widespread the use of GPUs was for cracking cryptosystems before the introduction of CUDA (after which it exploded). There were certainly examples and it was a budding technique in the community, but I couldn't find concrete and widely used examples to cite.]. This was exacerbated by the [Crypto Wars](https://en.wikipedia.org/wiki/Crypto_Wars): futile efforts by the United States government to limit the availability strong encryption to the general public and in export products (cryptography is still classified as a dual-use technology and its exports are somewhat restricted). The new availability of highly-parallel hardware combined with new ideas around this time made for practically feasible attacks on widely deployed cryptosystems, such as cracking passwords in networked Microsoft operating systems (e.g. LAN Manager), cracking early WiFi encryption (WEP, and later WPA), and breaking commonly used hashes (such as the abysmal MD5). Cryptography (and laws around cryptography) have come a long way since then.
 
 ## A crash course to modern NVIDIA architectures
 
