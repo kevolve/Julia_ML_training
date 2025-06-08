@@ -8,7 +8,7 @@ julia:
         - "Yoni Nazarathy"
 ---
 
-# Motivation
+# Why parallel?
 
 For decades, computers got faster mainly because chipmakers squeezed more transistors onto chips and raised their clock speeds—this was Moore’s law. But after the early 2000s, increasing clock speeds hit limits due to heat and power dissipation limits. In order to get more power into machines, CPU manufacturers instead started putting multiple cores on CPUs: identical and somewhat isolated execution units that can do work independently. In essence, it became harder to make CPUs faster so they just put many on one die.
 
@@ -208,7 +208,7 @@ heatmap(my_mb_top, size=(500, 500), axis=false, aspect_ratio=:equal, colorbar_ti
 
 ## History of GPGPU
 
-GPGPU stands for General Purpose GPU computing: originally GPUs were built for and only really good for "accelerating graphical workflows": texture mapping, shading, rendering polygons and such for gaming and professional applications (CAD, architecture, rendering, etc). They were highly optimized for doing these kinds of computations, which often involved computing small matrix multiplications over and over again. GPU performance was measured in things polygons per second (which is a bit of a nonsensical measure). See @vuduc2013brief.
+GPGPU stands for General Purpose GPU computing: originally GPUs were built for and only really good for *accelerating graphical workflows*: texture mapping, shading, rendering polygons and such for gaming and professional applications (CAD, architecture, rendering, etc). They were highly optimized for doing these kinds of computations, which often involved computing small matrix multiplications over and over again. GPU performance was measured in things polygons per second (which is a bit of a nonsensical measure). See @vuduc2013brief.
 
 Around the early 2000s, some hackers and researched started coming up with novel ways of using GPUs for non-graphics applications. These worked largely by writing custom *pixel shaders* that were supposed to give graphical programs the ability to write very restrictive, but general code to manipulate fragments of textures and bitmaps. These applications creatively abused the graphics pipelines to do simple parallel computations. For example:
 
@@ -259,7 +259,7 @@ Originally posed as far back as 1742, it's still a conjecture: it has not been p
 
 Here is both a slow implementation (using a single core) as well as a fast implementation.
 
-```{julia}; eval=false
+```julia
 using BenchmarkTools
 using Plots
 

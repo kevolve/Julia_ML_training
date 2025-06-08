@@ -324,7 +324,7 @@ You will be prompted to install Jupyter, after which you can create new notebook
 
 It's common to activate an environment for the current folder when running in Julia, so you will often find the following code in the first cell of a Jupyter notebook.
 
-```{julia}; eval=false
+```julia
 using Pkg; Pkg.activate(@__DIR__)
 ```
 
