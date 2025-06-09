@@ -79,8 +79,7 @@ Threads.@threads for i in 1:17
             "."^(time_stamp()-before_start), # spacing proportional to elapsed time
             " Starting iteration $i")
 
-  #TODO(uncomment)
-    # sleep(1) # sleep for one second as though "processing something"
+    sleep(1) # sleep for one second as though "processing something"
 
     println(time_stamp(),
             "."^(time_stamp()-before_start), # spacing proportional to elapsed time
@@ -212,8 +211,6 @@ heatmap(my_mb_top, size=(500, 500), axis=false, aspect_ratio=:equal, colorbar_ti
 
 ## Making it faster with threads
 
-TODO(aapeli): write
-
 ```{julia}
 function compute_mandelbrot_multithreaded(
     # real (x-axis) values
@@ -245,9 +242,7 @@ Run it a second time to get a clean time
 
 On my machine, this takes about 0.046682 seconds, about 3.3x as fast as the original one.
 
-## More multithreading
-
-TODO(aapeli): more more more
+# More multithreading
 
 ## What can go wrong?
 
@@ -295,9 +290,9 @@ for _ in 1:10
 end
 ```
 
-The problem is caused by a data race where a thread will read the value of `sum` first, then another thread will read it, and only TODO
+The problem is caused by a data race where a thread will read the value of `sum` first, then another thread will read it. Regardless of which order the two threads now write the answer to the piece of memory, the result will be wrong, as at least one summand will be "lost".
 
-One can get around this by wrapping the shared variable in an "atomic" type (atomic means)
+One can get around this by wrapping the shared variable in an "atomic" type (atomic means that its updates are "atoms", they cannot be broken down into a read and a write that could end up un-synchronized)
 
 ```{julia}
 function inverse_squares_with_atomic(arr::Vector{Int64})
@@ -390,7 +385,6 @@ heatmap(cuda_mb, size=(500, 500), axis=false, aspect_ratio=:equal, colorbar_titl
 Run it a second time to get a clean time
 
 ```{julia}
-# TODO: CUDA.precompile()
 CUDA.@time cuda_mb = compute_mandelbrot(CuArray(real_range_full), CuArray(imag_range_full), max_iter=100);
 ```
 
