@@ -1412,9 +1412,55 @@ QQQQ - Example
 
 ### JuliaCall example in R
 
-The main tool to invoke Julia from R is the `JuliaCall` R package. See it on [CRAN](https://cran.r-project.org/web/packages/JuliaCall/index.html).
+The main tool to invoke Julia from R is the `JuliaCall` R package. See it on [CRAN](https://cran.r-project.org/web/packages/JuliaCall/index.html), or the [`JuliaCall` GitHub repo](https://github.com/JuliaInterop/JuliaCall).
 
-QQQQ - Example
+Here is an example directly from the README of JuliaCall (this is R code):
+
+```
+library(JuliaCall)
+julia <- julia_setup()
+#> Julia version 1.11.1 at location C:\Users\lichangcheng\.julia\juliaup\julia-1.11.1+0.x64.w64.mingw32\bin will be used.
+#> Loading setup script for JuliaCall...
+#> Finish loading setup script for JuliaCall.
+
+## If you want to use `Julia` at a specific location, you could do the following:
+## julia_setup(JULIA_HOME = "the folder that contains Julia binary").
+## You can also set JULIA_HOME in command line environment or use `options(...)`.
+
+## Different ways of using Julia to calculate sqrt(2)
+
+# julia$command("a = sqrt(2);"); julia$eval("a")
+julia_command("a = sqrt(2);"); julia_eval("a")
+#> [1] 1.414214
+julia_eval("sqrt(2)")
+#> [1] 1.414214
+julia_call("sqrt", 2)
+#> [1] 1.414214
+julia_eval("sqrt")(2)
+#> [1] 1.414214
+julia_assign("x", sqrt(2)); julia_eval("x")
+#> [1] 1.414214
+julia_assign("rsqrt", sqrt); julia_call("rsqrt", 2)
+#> [1] 1.414214
+2 %>J% sqrt
+#> [1] 1.414214
+
+## You can use `julia$exists` as `exists` in R to test
+## whether a function or name exists in Julia or not
+
+julia_exists("sqrt")
+#> [1] TRUE
+julia_exists("c")
+#> [1] FALSE
+
+## Functions related to installing and using Julia packages
+
+julia_install_package_if_needed("Optim")
+julia_installed_package("Optim")
+#> [1] "1.9.4"
+julia_library("Optim")
+```
+
 
 ### RCall.jl example in Julia
 
