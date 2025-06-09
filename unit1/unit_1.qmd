@@ -646,7 +646,7 @@ end
 @code_lowered sqrt(2.5)
 ```
 
-Here `sqrt_llvm()` compiles to [Low Level Virtual Machine (LLVM)](https://en.wikipedia.org/wiki/LLVM), so while many functions in Julia are actually implemented in Julia, with square roots it is better to let the underlying low level (LLVM) code handle square roots because it is later changed to assembly code; which is very fast. You can inspect this via the macros `@code_llvm` and `@code_native`.  
+Here `sqrt_llvm()` compiles to [Low Level Virtual Machine (LLVM)](https://en.wikipedia.org/wiki/LLVM), so while many functions in Julia are actually implemented in Julia, with square roots it is better to let the underlying compiler infrastructure (LLVM) handle square roots because it knows better how to compile it to machine-dependent assembly code; which is very fast. You can inspect this via the macros `@code_llvm` and `@code_native`.  
 
 This will generally look the same on different computer types (LLVM is hardware agnostic):
 
@@ -993,7 +993,7 @@ stirling(n) = (√(2π*n))*(n/MathConstants.e)^n
     for n in 1:10]
 ```
 
-Say want $n$ to not take $n!$ to be larger than,
+Say want $n$ such taht $n!$ is not larger than,
 
 ```{julia}
 typemax(UInt64), UInt(2)^64-1, float(typemax(UInt64))
@@ -1065,7 +1065,7 @@ What about factorials of numbers that aren't positive integers?
 factorial(6.5)
 ```
 
-No, that isn't defined. But you may be looking for the [gamma](https://en.wikipedia.org/wiki/Gamma_function) special function:
+It's not defined. But you may be looking for the [gamma](https://en.wikipedia.org/wiki/Gamma_function) special function:
 
 $$
 \Gamma(z)=\int_{0}^{\infty} x^{z-1} e^{-x} d x.
@@ -1077,7 +1077,7 @@ using SpecialFunctions
 gamma(6.5)
 ```
 
-To feel more confident this value agrees with the integral definition of $\Gamma(\cdot)$; let's compute the integral in a very crude manner ([Riemann_sum](https://en.wikipedia.org/wiki/Riemann_sum)):
+To feel more confident this value agrees with the integral definition of $\Gamma(\cdot)$; let's compute the integral in a very crude manner (see [Riemann sums](https://en.wikipedia.org/wiki/Riemann_sum)):
 
 ```{julia}
 function my_crude_gamma(z; δ = 0.01, M = 50) #\delta
@@ -1121,14 +1121,14 @@ using SpecialFunctions
 [(n = n, n! = factorial(n), Γ = gamma(n+1)) for n in 0:10]
 ```
 
-The gamma function can also be extended outside of the positive reals. At some singularity points it isn't defined though.
+The gamma function can also be extended outside of the positive reals. However, it is not defined at some singularity points.
 
 ```{julia}
 @show gamma(-1.1) #here defined.
 gamma(-1) #here not defined
 ```
 
-Here is a plot where we exclude certain points where it isn't defined
+Here is a plot, excluding some points where it isn't defined
 
 ```{julia}
 using Plots, SpecialFunctions
@@ -1162,6 +1162,7 @@ vline!([mean_d], color=:red, linestyle=:dash, label="Mean = $mean_d")
 ```{julia}
 @doc Gamma
 ```
+
 The density is,
 
 $$
@@ -1183,13 +1184,14 @@ Julia has an abstract type hierarchy (a tree). At the top of the tree is the typ
 x = 2.3
 @show typeof(x)
 @show supertype(Float64)
-@show supertype(AbstractFloattr)
+@show supertype(AbstractFloat)
 @show supertype(Real)
 @show supertype(Number)
 @show supertype(Any);
 ```
 
-There is an **is a** relationship:
+The **is a** relationship tells if an expression is of a given type:
+
 ```{julia}
 isa(2.3, Number)
 ```
