@@ -11,7 +11,9 @@ Beyond [arrays](https://docs.julialang.org/en/v1/base/arrays/) which are very im
 
 ## Dictionaries
 
-See [Dictionaries in the Julia docs](https://docs.julialang.org/en/v1/base/collections/#Dictionaries). Here are some examples:
+*See [Dictionaries in the Julia docs](https://docs.julialang.org/en/v1/base/collections/#Dictionaries).*
+
+Dictionaries (often called hash maps or associative arrays) store key-value pairs. Each key in a dictionary must be unique. They are incredibly useful for many purposes because their looking up values quickly based on a unique identifier. In particular, well designed hash maps are implemented with lookup (get value by key), insertion (insert value to key), and deletion (remove value by key) operations taking average $O(1)$ (constant) time^["Constant time" suffices in practice, there is minutiae and worst case is $O(n)$ which is bad -- for theoretical applications, they can be implemented in $O(\log n)$ worst case time with self-balancing trees, but all practical applications rely on constant time average and engineering tricks to avoid the linear time worst case.]. This makes them very popular both for their simplicity but also to speed up algorithms with smart tricks (like reverse indeces built in hash maps).
 
 ```{julia}
 pop = Dict()
@@ -20,6 +22,12 @@ pop["United States"] = 340_111_000
 pop["Finland"] = 5_634_000
 
 pop
+```
+
+Infer its type:
+
+```{julia}
+@show typeof(pop)
 ```
 
 We can restrict the types:
@@ -33,7 +41,6 @@ strict_pop["Finland"] = 5_634_000
 strict_pop
 ```
 
-
 ```{julia}
 # this is okay
 pop["North Pole"] = 0.5
@@ -41,7 +48,68 @@ pop["North Pole"] = 0.5
 strict_pop["North Pole"] = 0.5
 ```
 
-<!-- todo(aapeli): more dict -->
+Checking and accessing dictionary values:
+
+```{julia}
+# Accessing a value
+population_australia = pop["Australia"]
+println("Population of Australia: ", population_australia)
+
+mars_pop_safe = get(pop, "Mars", nothing)
+```
+
+We can also use `haskey`:
+
+```{julia}
+if haskey(pop, "United States")
+    println("United States population exists: ", pop["United States"])
+end
+
+if !haskey(pop, "Atlantis")
+    println("Atlantis population does not exist.")
+end
+```
+
+More useful operations:
+
+* `keys()`: Returns an iterable collection of all keys in the dictionary.
+* `values()`: Returns an iterable collection of all values in the dictionary.
+* `pairs()`: Returns an iterable collection of `Pair` objects (key => value) for all entries.
+* `length()`: Returns the number of key-value pairs in the dictionary.
+* `empty!()`: Removes all key-value pairs from the dictionary.
+
+
+```{julia}
+println()
+println("Keys in pop: ", keys(pop))
+println("Values in pop: ", values(pop))
+println("Pairs in pop: ", pairs(pop))
+println("Number of entries in pop: ", length(pop))
+
+# Iterating through a dictionary
+println()
+println(nIterating through pop:")
+for (country, population) in pop
+    println("$country: $population")
+end
+
+# Create a dictionary using the Dict constructor with pairs
+new_countries = Dict("Canada" => 38_000_000, "Mexico" => 126_000_000)
+println()
+println(nNew countries dictionary: ", new_countries)
+
+# Merging dictionaries (creates a new dictionary)
+merged_pop = merge(pop, new_countries)
+println("Merged population dictionary: ", merged_pop)
+
+# In-place merge (modifies the first dictionary)
+merge!(pop, new_countries)
+println("Pop after in-place merge: ", pop)
+
+# Clearing a dictionary
+empty!(pop)
+println("Pop after empty!: ", pop)
+```
 
 ## Sets
 
