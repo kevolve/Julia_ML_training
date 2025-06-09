@@ -3,7 +3,7 @@ title: "Unit 4 - Parallel and Fast"
 engine: julia
 julia:
     exeflags: ["--project=@.", "--threads=8"]
-    author: 
+    author:
         - "Aapeli Vuorinen"
         - "Yoni Nazarathy"
 ---
@@ -20,15 +20,15 @@ This brings a whole new set of challenges to writing programs: now we can't just
 
 # Overview
 
-Julia is well suited for distributed computing, parallel computing, and GPU use. See the overview of [parallel computing](https://docs.julialang.org/en/v1/manual/parallel-computing/) in the Julia documentation. In this unit we deal with several layers of parallelism for speedup: 
+Julia is well suited for distributed computing, parallel computing, and GPU use. See the overview of [parallel computing](https://docs.julialang.org/en/v1/manual/parallel-computing/) in the Julia documentation. In this unit we deal with several layers of parallelism for speedup:
 
-1. **Multi-threading** - Use multiple CPU threads to run tasks simultaneously within a single process. See the [docs](https://docs.julialang.org/en/v1/manual/multi-threading/). 
+1. **Multi-threading** - Use multiple CPU threads to run tasks simultaneously within a single process. See the [docs](https://docs.julialang.org/en/v1/manual/multi-threading/).
 1. **Distributed Computing** - Use multiple processes, possibly on different machines, to work together on larger problems. See the [docs](https://docs.julialang.org/en/v1/manual/distributed-computing/) as well as [Distributed.jl](https://github.com/JuliaLang/Distributed.jl) and [Malt.jl](https://github.com/JuliaPluto/Malt.jl).
 1. **GPUs** - Harness the massive parallelism of graphics processors for compute-heavy tasks. See [JuliaGPU.org](https://juliagpu.org/).
 
-Combinations of 1, 2, and 3 are obviously possible. 
+Combinations of 1, 2, and 3 are obviously possible.
 
-Note that a related item, also in the Julia documentation is "Asynchronous 'tasks', or coroutines". See the [Asynchronous Programming docs](https://docs.julialang.org/en/v1/manual/asynchronous-programming/). 
+Note that a related item, also in the Julia documentation is "Asynchronous 'tasks', or coroutines". See the [Asynchronous Programming docs](https://docs.julialang.org/en/v1/manual/asynchronous-programming/).
 
 We now focus on multi-threading, distributed computing, and GPUs. We then attempt to run and example with [Oceananigans.jl](https://github.com/CliMA/Oceananigans.jl) from the [CliMA organization](https://juliapackages.com/u/clima) for ocean simulation. See the recent preprint @wagner2025high.
 
@@ -75,7 +75,7 @@ For basic parallelism, one of the best tools we have is the [`Threads.@threads`]
 ```{julia}
 before_start = time_stamp()
 Threads.@threads for i in 1:17
-    println(time_stamp(), 
+    println(time_stamp(),
             "."^(time_stamp()-before_start), # spacing proportional to elapsed time
             " Starting iteration $i")
 
@@ -164,7 +164,7 @@ function compute_mandelbrot(
   c_grid = complex.(real_range', imag_range)
   # apply mandelbrot_iter to each value of c_grid
   return mandelbrot_iter.(c_grid, max_iter)
-end
+end;
 ```
 
 Let's define a box that contains most of $\mathcal M$:
@@ -173,7 +173,7 @@ Let's define a box that contains most of $\mathcal M$:
 width, height = 1500, 1500
 
 real_range_full = LinRange(-2., 0.5, width)
-imag_range_full = LinRange(-1.25, 1.25, height)
+imag_range_full = LinRange(-1.25, 1.25, height);
 ```
 
 And run to see see how fast we go:
@@ -249,6 +249,108 @@ On my machine, this takes about 0.046682 seconds, about 3.3x as fast as the orig
 
 TODO(aapeli): more more more
 
+## What can go wrong?
+
+Consider this simple function that computes the sum
+
+$$
+\sum_{n=1}^\infty\frac{1}{n^2}
+$$
+
+It's a well known identity that this sum equals $\pi^2/6$ (but not so easy to prove).
+
+```{julia}
+function inverse_squares_simple(arr::Vector{Int64})
+  sum = 0.
+  for i in eachindex(arr)
+    sum += 1/(arr[i]^2)
+  end
+  return sum
+end
+```
+
+```{julia}
+using Base.Threads
+
+function inverse_squares_buggy_multithreaded(arr::Vector{Int64})
+  sum = 0.
+  # Try to use @threads to parallelize the loop over array indices
+  @threads for i in eachindex(arr)
+    # Each thread attempts to add to the sum
+    sum += 1/(arr[i]^2) # <-- This is problematic!
+  end
+  return sum
+end
+
+N = 1_000
+numbers = collect(1:N)
+true_val = π^2/6
+naive_sum = inverse_squares_simple(numbers)
+
+println("True value is $true_val, naive method gives $naive_sum, or around $(round(100*naive_sum/true_val, digits=2))% of true val")
+
+for _ in 1:10
+    result = inverse_squares_buggy_multithreaded(numbers)
+    println("\"sum\" is $result, got $(round(100*result/naive_sum, digits=2))% of naive sum $naive_sum")
+end
+```
+
+The problem is caused by a data race where a thread will read the value of `sum` first, then another thread will read it, and only TODO
+
+One can get around this by wrapping the shared variable in an "atomic" type (atomic means)
+
+```{julia}
+function inverse_squares_with_atomic(arr::Vector{Int64})
+  sum = Atomic{Float64}(0.)
+  @threads for i in eachindex(arr)
+    atomic_add!(sum, 1/(arr[i]^2))
+  end
+  # The `[]` syntax dereferences the Atomic value.
+  return sum[]
+end
+
+for _ in 1:10
+    result = inverse_squares_with_atomic(numbers)
+    println("\"sum\" is $result, got $(round(100*result/naive_sum, digits=2))% of naive sum $naive_sum")
+end
+```
+
+But note:
+
+```{julia}
+@benchmark inverse_squares_simple(numbers)
+```
+```{julia}
+@benchmark inverse_squares_buggy_multithreaded(numbers)
+```
+```{julia}
+@benchmark inverse_squares_with_atomic(numbers)
+```
+
+Trying to do it with multithreading in this case made it slower (and broke it!) then fixing it up with atomic made it *even* slower. It's now 40x slower for no benefit.
+
+Parallelism can be hard. You have to be careful with various failure modes like race conditions. We won't delve deeper into locking and synchronization pritimives, it's a huge area.
+
+## Task-based parallelism with `Threads.@spawn`
+
+Instead of simply splitting a loop's iterations, Threads.@spawn allows you to launch an individual function call or expression as a separate, lightweight thread (often called a "task" or "goroutine" in other languages). Julia's runtime then intelligently schedules these tasks to run on available threads in your thread pool. 
+
+When you use `Threads.@spawn`, it immediately returns a `Task` object. This `Task` object is like a promise that the computation will be done eventually. To get the actual result from the `Task`, you use `fetch()`. If you just want to know when the task is complete without needing its return value, you can use `wait()`.
+
+## Example: speeding up boostrap statistics
+
+@efron2021computer
+
+### `Threads.@spawn` vs. `Threads.@threads`
+
+| Feature              | `Threads.@threads`                               | `Threads.@spawn`                                  |
+| :------------------- | :----------------------------------------------- | :------------------------------------------------ |
+| **Purpose**          | Loop parallelization (iterating over collections) | Launching individual, independent computations    |
+| **Control Flow**     | Synchronous (main thread waits for loop to finish) | Asynchronous (main thread continues immediately)  |
+| **Return Value**     | No direct return from individual iterations      | Returns a `Task` object, which holds the result   |
+| **Use Case**         | Homogeneous, iterative work                      | Heterogeneous, distinct, or long-running computations |
+
+
 # GPUs
 
 ## History of GPGPU
@@ -288,6 +390,7 @@ heatmap(cuda_mb, size=(500, 500), axis=false, aspect_ratio=:equal, colorbar_titl
 Run it a second time to get a clean time
 
 ```{julia}
+# TODO: CUDA.precompile()
 CUDA.@time cuda_mb = compute_mandelbrot(CuArray(real_range_full), CuArray(imag_range_full), max_iter=100);
 ```
 
@@ -400,7 +503,7 @@ scatter(2:2:n, checks, legend=false, xlabel="n", ylabel="Number of Goldbach pair
 * [juliagpu.org](https://juliagpu.org/)
 * [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl)
 
-# Example - Oceananigans 
+# Example - Oceananigans
 
 Let's explore the [Oceananigans.jl](https://github.com/CliMA/Oceananigans.jl) package and try to run it both on GPU and on CPU.
 
