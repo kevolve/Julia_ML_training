@@ -1509,9 +1509,43 @@ R ANOVA p-value: 0.00014236168817139904
 For Python integration both tools exist together in [PythonCall.jl](https://github.com/JuliaPy/PythonCall.jl).
 This gives the Python package, `juliacall` and the Julia package, `PythonCall.jl`.
 
+An earlier tool is [PyCall.jl](https://github.com/JuliaPy/PyCall.jl). For example before [Plots.jl](https://github.com/JuliaPlots/Plots.jl) rose to popularity, plotting in Julia was via [PyPlot.jl](https://github.com/JuliaPy/PyPlot.jl) which wraps Python's [matplotlib](https://matplotlib.org/).
+
+See also the [JuliaPy](https://github.com/JuliaPy) organization.
+
 ### JuliaCall example in Python
 
-QQQQ - Example
+This [guide](https://juliapy.github.io/PythonCall.jl/stable/juliacall/) presents the gist of using Julia from Python.
+
+As a simple example consider the Python file, [python_calling_julia.py](https://github.com/open-AIMS/Julia_ML_training/blob/main/unit1/python_calling_julia.py) which contains,
+
+```
+from juliacall import Main as jl
+
+# Run the Julia simulation
+jl.seval('include("simulator.jl")')
+result = jl.seval("simulate()")
+
+# Process the result in Python
+print("The result from the Julia simulation is: ", result)
+```
+
+Now the idea is that it uses an **efficient** Julia simulator in [simulator.jl](https://github.com/open-AIMS/Julia_ML_training/blob/main/unit1/simulator.jl):
+
+```
+function simulate()
+    for i in 1:3
+        sleep(1) #fast heavy julia simulation
+    end
+    return 42
+end
+```
+
+Now after you, `pip install juliacall`, if you try, `python python_calling_julia.py` (in the `unit1` folder), you'll see:
+
+```
+The result from the Julia simulation is:  42
+```
 
 ### PythonCall example in Julia
 
