@@ -1418,9 +1418,33 @@ QQQQ - Example
 
 ### RCall.jl example in Julia
 
-In Julia the main tool is [RCall.jl](https://github.com/JuliaInterop/RCall.jl).
+In Julia the main tool for interfacing with R is [RCall.jl](https://github.com/JuliaInterop/RCall.jl). The key docs are [here](https://juliainterop.github.io/RCall.jl/stable/gettingstarted/). The main tools are the macros `@rput`, `@rget`, and the `R` string macro.
 
-QQQQ - Example
+```{julia}
+using CSV, DataFrames, RCall
+
+data1 = CSV.read("../data/machine1.csv", header=false, DataFrame)[:,1]
+data2 = CSV.read("../data/machine2.csv", header=false, DataFrame)[:,1]
+data3 = CSV.read("../data/machine3.csv", header=false, DataFrame)[:,1]
+
+function R_ANOVA(allData)
+    data = vcat([ [x fill(i, length(x))] for (i, x) in
+    			enumerate(allData) ]...)
+    df = DataFrame(data, [:Diameter, :MachNo])
+    @rput df
+
+    R"""
+    df$MachNo <- as.factor(df$MachNo)
+    anova <- summary(aov( Diameter ~ MachNo, data=df))
+    fVal <- anova[[1]]["F value"][[1]][1]
+    pVal <- anova[[1]]["Pr(>F)"][[1]][1]
+    """
+    println("R ANOVA f-value: ", @rget fVal)
+    println("R ANOVA p-value: ", @rget pVal)
+end
+
+R_ANOVA([data1, data2, data3])
+```
 
 ## Integration with Python
 
