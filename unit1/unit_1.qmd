@@ -1343,11 +1343,66 @@ In general, Python and R, are each more popular than Julia. Python dominates the
 
 In some instances Julia may play a role as such a "low level" languages, and one can consider creating packages in Julia and wrapping them in Python and R. This is the case with Julia's famous [DifferentialEquations.jl](https://github.com/SciML/DifferentialEquations.jl) package. In R it is wrapped with [diffeqr](https://github.com/SciML/diffeqr) and in Python with [diffeqpy](https://github.com/SciML/diffeqpy). 
 
-QQQQ-diffeqr- example - QQQQQ
+As a side note, we mention that one thing that is keeping Julia from being a very useful "lower level" platform is the size of the system runtime binary. A long discussion about this is [here](https://discourse.julialang.org/t/roadmap-for-small-binaries/99266/122). Also, you may find this [video](https://www.youtube.com/watch?v=R0DEG-ddBZA) interesting, as it highlights progress in reducing the binary size. However, Julia binary reduction is still work-in-progress, so stay tuned for developments on this front. Having small binaries may be important for enabling Julia to be easily wrapped within R and Python.
 
-QQQQ-diffeqpy- example - QQQQQ
+Still, even with the current state of affairs, let's see some basic examples of integrations with Python and R. You may also find the [JuliaInterop organization](https://github.com/JuliaInterop) useful.
 
-Considering the wrapping code in both these cases is instructive. QQQQ-Links-QQQQ. Let's now see how to carry integrations for ad-hoc purposes. 
+## Starting as R users with diffeqr
+
+Let's see a basic example of using the [diffeqr](https://github.com/SciML/diffeqr) R package. 
+
+Note that on a Mac M2 machine, we actually had trouble getting this package to work with the latest R version, `R-4.5.0-arm64.pkg`. In fact, after some investigation we had to revert to version R version `4.3.3`! This may be a `JuliaCall` issue, an `R` issue, a `diffeqr` issue, or any of the three possibilities. In any case we opened, this [issue](https://github.com/SciML/diffeqr/issues/49) with `diffeqr`. 
+
+With version `4.3.3` of R installed, and `diffeqr` reintalled in R `install.packages("diffeqr")`, the outputs as appearing in the README of [diffeqr](https://github.com/SciML/diffeqr) are reproduced. 
+
+First you run (in R):
+
+```
+de <- diffeqr::diffeq_setup()
+```
+
+Now before we do anything ruther look at the [R source code for `diffeq_setup`](https://github.com/SciML/diffeqr/blob/48114db6bd17aeacada3eb7311be153d00bc2913/R/diffeqr.R#L20C1-L33C2). This can give you an indication of the use of the R package, `JuliaCall`. Indeed after you run the above R line (assuming nothing is breaking), you may inspect `de` in R-Studio, by typing `de$`. You'll see a pop-up menu with all of the symbols exposed from DifferentialEquations.jl.
+
+Now type:
+
+```
+prob = de$ODEProblem(function(u, p, t) log(2) * u,  10, c(0., 4.))
+```
+
+This creates an ordinary differential equation (ODE) problem, $f'(u) =  \log(2) u$ with $f(0) = 10$, and a time horizon of $[0,4]$. It is an ODE that should double everytime unit. 
+
+For example if you type, `prob`, you'll see,
+
+```
+function(u, p, t) log(2) * u
+Julia Object of type ODEProblem{Float64, Tuple{Float64, Float64}, false, SciMLBase.NullParameters, ODEFunction{false, SciMLBase.AutoSpecialize, RCall.RFunction{RObject{ClosSxp}}, UniformScaling{Bool}, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, typeof(SciMLBase.DEFAULT_OBSERVED), Nothing, SymbolicIndexingInterface.SymbolCache{Nothing, Nothing, Nothing}}, Base.Pairs{Symbol, Union{}, Tuple{}, NamedTuple{(), Tuple{}}}, SciMLBase.StandardODEProblem}.
+ODEProblem{Float64, Tuple{Float64, Float64}, false, SciMLBase.NullParameters, ODEFunction{false, SciMLBase.AutoSpecialize, RCall.RFunction{RObject{ClosSxp}}, UniformScaling{Bool}, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, typeof(SciMLBase.DEFAULT_OBSERVED), Nothing, SymbolicIndexingInterface.SymbolCache{Nothing, Nothing, Nothing}}, Base.Pairs{Symbol, Union{}, Tuple{}, NamedTuple{(), Tuple{}}}, SciMLBase.StandardODEProblem}(ODEFunction{false, SciMLBase.AutoSpecialize, RCall.RFunction{RObject{ClosSxp}}, UniformScaling{Bool}, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, typeof(SciMLBase.DEFAULT_OBSERVED), Nothing, SymbolicIndexingInterface.SymbolCache{Nothing, Nothing, Nothing}}(RCall.RFunction{RObject{ClosSxp}}(RObject{ClosSxp}
+), UniformScaling{Bool}(true), nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, SciMLBase.DEFAULT_OBSERVED, nothing, SymbolicIndexingInterface.SymbolCache{Nothing, Nothing, Nothing}(nothing, nothing, nothing)), 10.0, (0.0, 4.0), SciMLBase.NullParameters(), Base.Pairs{Symbol, Union{}, Tuple{}, NamedTuple{(), Tuple{}}}(), SciMLBase.StandardODEProblem())
+```
+
+While this may appear like a-lot of junk (it is!), it shows you that there is some "Julia living in R".
+
+You can now run:
+
+```
+sol = de$solve(prob)
+```
+
+Then when you inspect `sol$t` you get:
+
+```
+[1] 0.0000000 0.1076078 0.4336223 0.9016389 1.4599310 2.1409919 2.9241760 3.8122657 4.0000000
+```
+
+And with `sol$u` you get:
+
+```
+[1]  10.00000  10.77440  13.50620  18.68187  27.50952  44.10650  75.90388 140.47676 159.99933
+```
+
+Note that at time $t=4$ we get that the ODE is at about $160$ as expected.
+
+Now see the README of [diffeqr](https://github.com/SciML/diffeqr) fo more interesting examples.
 
 ## Integration with R
 
