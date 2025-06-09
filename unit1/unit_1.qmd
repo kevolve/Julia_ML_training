@@ -1406,9 +1406,7 @@ Now see the README of [diffeqr](https://github.com/SciML/diffeqr) fo more intere
 
 ## Integration with R
 
-Let's start with an R wrapper of a Julia package: (diffeqr)[https://github.com/SciML/diffeqr]. This wrap's J
-
-QQQQ - Example
+Let's see JuliaCall and RCall.jl. Note that an alternative is ofcouse to run Julia, save outputs in JSON files, CSV files, Databases etc..., and read the input from R. And/or vice-versa. 
 
 ### JuliaCall example in R
 
@@ -1461,12 +1459,13 @@ julia_installed_package("Optim")
 julia_library("Optim")
 ```
 
-
 ### RCall.jl example in Julia
 
 In Julia the main tool for interfacing with R is [RCall.jl](https://github.com/JuliaInterop/RCall.jl). The key docs are [here](https://juliainterop.github.io/RCall.jl/stable/gettingstarted/). The main tools are the macros `@rput`, `@rget`, and the `R` string macro.
 
 ```{julia}
+#| echo: true
+#| output: false
 using CSV, DataFrames, RCall
 
 data1 = CSV.read("../data/machine1.csv", header=false, DataFrame)[:,1]
@@ -1490,6 +1489,19 @@ function R_ANOVA(allData)
 end
 
 R_ANOVA([data1, data2, data3])
+```
+
+Note that if R is not installed then you will get output like:
+
+```
+[ Info: No R installation found by RCall.jl. Precompilation of RCall and all dependent packages postponed. Importing RCall will fail until an R installation is configured beforehand.
+```
+
+If R is installed you get output like:
+
+```
+R ANOVA f-value: 10.516968568709055
+R ANOVA p-value: 0.00014236168817139904
 ```
 
 ## Integration with Python
