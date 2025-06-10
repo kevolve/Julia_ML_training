@@ -1,0 +1,1605 @@
+---
+title: "Unit 1 - Your first day with the Julia language"
+engine: julia
+---
+
+Welcome to "your first day" with the Julia language. Hopefully this unit will also be instructive if this is your second, or third, or 50th day with Julia. Still, we take an approach of zero experience with Julia.
+
+We start with installation. We then explore basic Julia code on a simple example. Then after we survey the past and present of Julia we explore all the modes in which you can run Julia. We then move onto the package manager. Every unit has its own **Julia environment** and so does this one. So we explore that environment and more. We then use two simple mathematical stories, square roots, and factorials, as a means to explore some language features and peculiarities. In particular, we wish to explore [Julia types](https://docs.julialang.org/en/v1/manual/types/) and the key property of [Julia multiple dispatch of methods](https://docs.julialang.org/en/v1/manual/methods/). We then close by exploring integration with R and Python.
+
+As you work through this unit/day. It is good to keep your work in the `work` folder under `unit1`. Enjoy.
+
+# Installation
+
+The recommended way to install Julia is using [JuliaUp](https://github.com/JuliaLang/juliaup).
+This is a small program that maintains multiple isolated Julia versions on your system simultaneously, and also helps update to newer versions as they become available.
+Do not confuse this with the [package manager](https://docs.julialang.org/en/v1/stdlib/Pkg/), which is used to install packages within Julia.
+
+For this course we recommended installing [Visual Studio Code](https://code.visualstudio.com/download), and the [Julia plugin for Visual Studio Code](https://www.julia-vscode.org/).
+Once you have Julia installed, it's common to add a few packages to your Julia base environment.
+In our case we install [IJulia.jl](https://github.com/JuliaLang/IJulia.jl) for running Julia within [Jupyter](https://jupyter.org/),
+[Pluto.jl](https://github.com/fonsp/Pluto.jl) to try out [Pluto notebooks](https://plutojl.org/), [QuartoNotebookRunner.jl](https://github.com/PumasAI/QuartoNotebookRunner.jl) which integrates with [Quarto](https://quarto.org/) to create or update typeset notes like the ones you are currently reading,
+and [Revise.jl](https://github.com/timholy/Revise.jl) which helps with development.
+
+Finally, you may also want to clone this repo and instantiate a separate Julia environment for each unit of the course (we'll walk you through those steps soon).
+
+In summary to install Julia and the supporting software, follow these steps.
+
+1. Install Julia (and JuliaUp). Follow the instructions in the [Official Julia installation page](https://julialang.org/install/). You'll run a shell script (Mac/Linux) or use the Microsoft store on Windows. Once installed, restart your terminal, after which `juliaup` and `julia` should be available in your terminal. Then try,
+    a. In the terminal run `juliaup` and you should see a short help listing.
+    b. In the terminal try `julia` in the command line and you should enter the Julia REPL (Read-Evaluate-Print Loop). You should see a prompt, `julia> ` and try `1+1` and hit ENTER. To exit, hit Ctrl+D, or run the function `exit()`.
+2. Install [Visual Studio Code](https://code.visualstudio.com/download) if you don't already have it installed.
+3. Install the [Julia plugin for Visual Studio Code](https://www.julia-vscode.org/). See instructions [here](https://www.julia-vscode.org/docs/dev/gettingstarted/#Installing-the-Julia-extension).
+4. Install the above mentioned Julia packages into your base environment. You can do this for each of the packages using the package manager as follows.
+    a. Run `julia` and enter package manager mode by hitting `]`. You should see the prompt change to `(@vX.X) pkg>` where X.X is the julia version you have installed.
+    b. Type `update` and ENTER to update the list of available packages from the registry.
+    c. Type `add IJulia` and ENTER to install IJulia.jl. 
+    d. Similarly `add Pluto` to install Pluto.jl. 
+    e. Similarly `add QuartoNotebookRunner` to install QuartoNotebookRunner.jl. In each case you can use TAB to autocomplete (or hit TAB twice to see all available options).
+    f. Finally `add Revise`.
+
+Note that this course was created with Julia version 1.11.5.
+You can see the version of Julia that you are running when you first run Julia, or by running `versioninfo()` in the Julia REPL.
+
+# First steps: Finding the max (loops, functions, variables, plotting)
+
+Let's dive directly into some code. Here you can see:
+
+* Using a Julia package with the `using` keyword. In this case, we use the `Random` package: one of the standard library packages (that come with Julia).
+* Creation of a function, with the `function` keyword, and returning a result with the `return` keyword.
+* A `for` loop.
+* A conditional (`if`) statement.
+* A few more core language features. 
+
+```{julia}
+using Random
+
+function find_max(data)
+    max_value = -Inf
+    for x ∈ data # You can type ∈ by typing \in + [TAB]. Could have just used `in` as well
+        if x > max_value
+            max_value = x
+        end
+    end
+    return max_value
+end
+
+# by convention, an exclamation mark (!) means that the function mutates objects in-place, in this case, `seed!` mutates the state of the random number generator
+Random.seed!(0)
+data = rand(100)
+max_value = find_max(data)
+println("Found maximal value: $(max_value)")
+```
+
+You of course don't need to implement such elementary functions, since most are supplied with the language, for example:
+
+```{julia}
+maximum(data)
+```
+
+You can get help for a function by typing `? maximum` in the REPL or in Jupyter. 
+
+Related built-in functions that may be of interest are `findmax`, `argmax`, and `max`. Similarly there are counterparts for `min` in place of max (`minimum`, `findmin`, `argmin`, and `min`). There is also `minmax`, and `extrema`. Look at the help for some of these functions and try some of the examples.  
+
+Here is the [control flow section](https://docs.julialang.org/en/v1/manual/control-flow/) in the Julia docs. And just as an example here are the docs for [`maximum`](https://docs.julialang.org/en/v1/base/collections/#Base.maximum).
+
+## Some fun probability
+
+Let's see how many times we get a new record while scanning for the maximum.
+
+```{julia}
+function find_max(data)
+    max_value = -Inf
+    n = 0
+    for x in data
+        if x > max_value
+            n += 1
+            max_value = x
+        end
+    end
+    return max_value, n # Returns a tuple
+end
+
+max_value, n = find_max(data)
+println("Found maximal value: $(max_value)")
+println("There were $n records along the way.")
+```
+
+**If the data is i.i.d., how many times does this happen (on average)?**
+
+Denote the number of records for $n$ data points by $X_n$ then,
+$$
+X_n = I_1 + I_2 + \ldots + I_n
+$$
+where,
+$$
+I_i =
+\begin{cases}
+1 & \text{if the}~i~\text{-th data point is a record}, \\
+0 & \text{otherwise}.
+\end{cases}
+$$
+Now,
+$$
+{\mathbb E}[X_n] = {\mathbb E}[I_1] + {\mathbb E}[I_2] + \ldots + {\mathbb E}[I_n]. 
+$$
+Observe that ${\mathbb E}[I_i] = {\mathbb P}(I_i = 1)$ and for statistically independent and identically distributed data points, the probability that the $i$-th datapoint is the maximum of the first $i$ is,
+$$
+{\mathbb P}(I_i = 1) = \frac{1}{i},
+$$
+Hence,
+$$
+{\mathbb E}[X_n] = h_n = \sum_{i=1}^n \frac{1}{i},
+$$
+the harmonic sum. It is known that
+$$
+h_n = \log(n) + \gamma + o(1),
+$$
+where $\gamma$ is the [Euler–Mascheroni constant](https://en.wikipedia.org/wiki/Euler%E2%80%93Mascheroni_constant) and $o(1)$ is a term that vanishes as $n \to \infty$. That is 
+$$
+h_n \approx \log(n) + \gamma.
+$$
+
+## Experimenting
+
+Let's see it...
+```{julia}
+# \gamma + [TAB]
+println("γ = ",Float64(MathConstants.γ))
+println()
+
+# These are one-line function definitions
+h(n) = sum(1/i for i in 1:n)
+approx_h(n) = log(n) + MathConstants.γ
+
+for n in 1:10
+    println(n, "\t", round(h(n), digits = 4), "\t\t", round(approx_h(n), digits = 4) )
+end
+
+
+```
+
+Let's plot the error of the approximation as $n$ grows.
+
+```{julia}
+using Plots
+err = [h(n) - approx_h(n) for n in 1:20] # This is a comprehension
+scatter(1:20, err, xticks=1:20, 
+        xlabel="n", ylabel = "Error", ylim = (0,0.5), legend=false)
+```
+
+
+Let's verify via a Monte Carlo simulation and also estimate the distribution:
+
+```{julia}
+using Statistics
+
+records = []
+
+data_n = 10^2
+num_sims = 10^5
+
+for s in 1:num_sims
+    Random.seed!(s)
+    data = rand(data_n)
+    _, n = find_max(data)
+    push!(records,n)
+end
+
+approx_value = approx_h(data_n)
+mc_value = mean(records)
+
+println("log($data_n) + γ =  $(approx_value), Monte Carlo Estimate: $(mc_value)")
+
+histogram(records, xticks = 1:maximum(records), nbins = maximum(records), 
+                normed=true, xlabel="Num Records", ylabel="Probability", legend=false)
+```
+
+# About Julia
+
+- **Origins and History**
+  - [Julia](https://en.wikipedia.org/wiki/Julia_(programming_language)) was conceived in 2009 by Jeff Bezanson, Stefan Karpinski, Viral B. Shah, and Alan Edelman and first publicly released in 2012.
+  - Born out of a dissatisfaction with existing technical computing languages for scientific and numerical computing.
+  - Built with the promise to be “as fast as C, as easy as Python, as flexible as Ruby, and as powerful for statistics as R.”
+
+- **Core Ideas**
+  - Designed for high-performance numerical and scientific computing.
+  - Combines the ease of use of dynamic languages (like Python or R) with performance close to statically-typed, compiled languages (like C and Fortran).
+  - Uses Just-In-Time (JIT) compilation via LLVM, meaning code is compiled to efficient machine code at runtime.
+
+- **Key Benefits**
+  - **Speed:** Approaches or matches C/Fortran in performance for many tasks. (Sometimes non-optimized generic Julia code compiles to be faster than non-optimized C code.)
+  - **Multiple Dispatch:** Allows defining function behavior across combinations of argument types, enabling more expressive and extensible code.
+  - **Rich Ecosystem:** Growing collection of packages for data science, machine learning, optimization, and visualization.
+  - **Easy Syntax:** Friendly to users familiar with Python, MATLAB, or R.
+  - **Metaprogramming:** Powerful features like macros for generating and transforming code.
+  - **Native Parallelism:** Designed with parallel and distributed computing in mind from the start.
+  - **Interoperability:** Easily calls C, Fortran, and Python libraries for integrating with existing codebases.
+
+## Key Julia "Communities"
+
+**Where to get help**
+
+* [The Julia Language Slack](https://julialang.org/slack/)
+* [Julia Discourse](https://discourse.julialang.org/)
+
+**Special Domains (a few examples):**
+
+* Operations Research: [JUMP](https://jump.dev/)
+* Scientific Machine Learning: [SciML](https://sciml.ai/)
+* Statistics: [Julia Statistics](https://github.com/JuliaStats)
+* Machine Learning: [Julia ML](https://juliaml.github.io/), [JuliaAI](https://github.com/JuliaAI)
+* Climate modelling: [CliMA](https://clima.caltech.edu/)
+* GPUs: [JuliaGPU](https://juliagpu.org/)
+
+**Some example Companies that rely on Julia:**
+
+* JuliaHub (used to be "Julia Computing"): [juliahub.com](https://juliahub.com/)
+* PumasAI: [pumas.ai](https://pumas.ai/)
+* Fugro Roames: [case study](https://juliahub.com/industries/case-studies/fugro-roames-ml)
+* More in Brisbane Australia: [Elara AI](https://elaraai.com/), [PlotLogic](https://www.plotlogic.com/)
+
+# Where to run Julia
+
+In this course we will probably use [Jupyter notebooks](https://jupyter.org/) because we like them. We'll commit any meaningful computations that we carry out to the [course repo](https://github.com/open-AIMS/Julia_ML_training). Many in the Julia community prefer [Pluto.jl](https://plutojl.org/), and certainly use VS-code (as we do to). Here is a list of key ways to run Julia:
+
+## Shell
+
+```sh
+$ echo 'println("Hello world!")' > temp.jl
+$ julia temp.jl
+Hello world
+```
+
+Or just
+
+```sh
+$ echo 'println("Hello world!")' | julia
+Hello world
+```
+
+Try `julia --help` to see options. 
+
+## The REPL (Read-Evaluate-Print Loop)
+
+```
+shell> julia
+               _
+   _       _ _(_)_     |  Documentation: https://docs.julialang.org
+  (_)     | (_) (_)    |
+   _ _   _| |_  __ _   |  Type "?" for help, "]?" for Pkg help.
+  | | | | | | |/ _` |  |
+  | | |_| | | | (_| |  |  Version 1.11.5 (2025-04-14)
+ _/ |\__'_|_|_|\__'_|  |  Official https://julialang.org/ release
+|__/                   |
+
+julia> 
+```
+
+At the prompt:
+
+* Hitting `]` changes to package manager mode. 
+* Hitting `;` changes to shell mode.
+* Hitting `?` changes to help mode.
+* Hitting `BACKSPACE` changes back to `julia>` mode.
+
+Useful function for running code: `include`. Try: `include("temp.jl")`. Related are the `using` and `import` keywords.
+
+Here are the [docs](https://docs.julialang.org/en/v1/stdlib/REPL/) for the REPL. Here is a [3 hr Workshop Video](https://www.youtube.com/watch?v=bHLXEUt5KLc) about the Julia REPL (probably a bit longer than most people are willing to spend). The REPL is also configurable and a popular package for "improving" it is [OhMyREPL.jl](https://github.com/KristofferC/OhMyREPL.jl). There is also a [RemoteREPL.jl](https://github.com/JuliaWeb/RemoteREPL.jl) package for connecting to a remote Julia process!
+
+## Visual Studio Code
+
+The Julia extension makes VS Code a great Julia IDE (integrated development environment). Not quite R-Studio, but close.
+
+- **Syntax highlighting:** Provides rich syntax highlighting for Julia code.
+- **Code completion:** Offers IntelliSense, code completion, and signature help.
+- **Integrated REPL:** Launch and interact with a Julia REPL directly in VS Code.
+- **Debugger support:** Includes a full-featured debugger with breakpoints, stepping, and variable inspection.
+- **Plot pane:** View plots and figures inline within the VS Code editor.
+- **Dataframe preview:** View dataframes (tables).
+- **Workspace view:** Explore variables, data, and modules in your current environment.
+- **Environment/project integration:** Works seamlessly with Julia’s package and environment management.
+- **Notebook support:** Compatible with Jupyter notebooks via the VS Code Jupyter extension.
+- **Hover/documentation:** View function/type docs and use jump-to-definition.
+- **Actively maintained:** The extension is regularly updated and supported by the Julia community.
+
+**Shortcuts:**
+
+- **Start Julia REPL:** `Ctrl+Shift+P` → type and select `Julia: Start REPL`
+- **Execute active file in REPL:** `Ctrl+Shift+P` → type and select `Julia: Execute File in REPL`
+- **Send code to REPL:** `Shift+Enter`
+- **Execute cell or selected lines:** `Alt+Enter`
+- **Go to definition:** `F12`
+- **Find references:** `Shift+F12`
+- **Show documentation (hover):** `Ctrl+K Ctrl+I` (or just hover cursor over symbol)
+- **Run code cell above/below:** `Ctrl+Alt+Up` / `Ctrl+Alt+Down`
+- **Set breakpoint (in debug mode):** `F9`
+- **Step over (in debug mode):** `F10`
+- **Step into (in debug mode):** `F11`
+- **Continue (in debug mode):** `F5`
+
+This [25 minute tutorial YouTube video](https://www.youtube.com/watch?v=IdhnP00Y1Ks) is slightly dated, but still does a great job to showcase what Julia VS-Code can do.
+
+## Jupyter
+
+Jupyter has become the standard way in the machine learning community of exploring and communicating ideas via code. 
+The 'J' in "Jupyter" actually stands for "Julia". 
+The Julia community, however, uses Jupyter a bit less (yet the course instructors are certainly avid users).
+
+While the Julia REPL and shell scripts are excellent for development and execution, Jupyter notebooks allow you to combine code, output, visualizations, and narrative text in a single document, in a way that makes interactive exploration easy.
+
+To run Julia inside Jupyter, you need the `IJulia` package, and can then run
+
+```julia
+using IJulia
+notebook()
+```
+
+You will be prompted to install Jupyter, after which you can create new notebooks with the Julia kernel.
+
+It's common to activate an environment for the current folder when running in Julia, so you will often find the following code in the first cell of a Jupyter notebook.
+
+```julia
+using Pkg; Pkg.activate(@__DIR__)
+```
+
+## Pluto.jl
+
+While both Pluto.jl and Jupyter are interactive notebook environments for Julia, Pluto.jl is fundamentally reactive—changing a variable or a cell instantly updates all dependent cells throughout the notebook, ensuring consistency and minimizing hidden state issues. (In contrast, Jupyter notebooks execute cells in the order chosen by the user, which can sometimes lead to hard-to-debug inconsistencies if cells are run out of order.) Pluto notebooks have a more streamlined, Julia-specific design and promote reproducibility by making cell dependencies explicit, whereas Jupyter offers broader language support and a larger ecosystem of extensions but does not provide the same level of reactive interactivity or strict cell dependency mapping as Pluto.jl.
+
+There was even a conference! [PlutoCon2021](https://plutojl.org/plutocon2021/).
+
+```
+julia> using Pluto
+┌ Info: 
+│   Welcome to Pluto v0.20.8 🎈
+│   Start a notebook server using:
+│ 
+│ julia> Pluto.run()
+│ 
+│   Have a look at the FAQ:
+│   https://github.com/fonsp/Pluto.jl/wiki
+└ 
+```
+
+## Quarto
+
+A modern R-markdown style environment. Used to make this course!  Has good Julia integration. See for example the [Pumas Tutorials](https://tutorials.pumas.ai/) that make extensive use of Quarto.
+
+A related legacy framework is [Weave.jl](https://github.com/JunoLab/Weave.jl). For example this [UQ Julia Course](https://courses.smp.uq.edu.au/MATH2504/2024/lectures_html/lecture-unit-1.html) used Weave.jl.
+
+## JuliaHub
+
+[JuliaHub](https://juliahub.com/), formerly called "Julia Computing", is the "Julia company" led by the creators of the language. The JuliaHub platform is a cloud based platform where you can run Julia and have access to compute power. For example one of the companies that use Julia, [PumasAI](https://pumas.ai/), have their main Pumas platform hosted on JuliaHub. As a private end user you can also get access to JuliaHub and this may be one way to get (paid) GPU access.
+
+Here is a [video](https://www.youtube.com/watch?v=XHsRsllpvqU) showcasing JuliaHub. Also here is a [Pumas Onboarding video](https://www.youtube.com/watch?v=ERfhrnKX4mQ) which can serve as an example of what JuliaHub looks like when integrated for a specific application such as Pumas. 
+
+## Integrations
+
+You can also run Julia through Python and R via their language interfaces. We discuss this method later in this Unit. Note also that JuliaHub provides R-Studio.
+
+# The Package Manager
+
+Like most other modern languages, Julia comes with a powerful package manager, allowing you to install various libraries and modules for different use cases. Here are the [docs](https://pkgdocs.julialang.org/v1/). This [long YouTube tutorial](https://www.youtube.com/watch?v=uiQpwMQZBTA) also focuses on the Package Manager.
+
+There are two ways to use the package manager, via the REPL and using the `Pkg` package.
+
+**Installing packages via the REPL**: Start the REPL with `julia`, then type `]` at the `julia>` prompt. This will change the prompt to say `(@vX.X) pkg>` where `vX.X` is the Julia version, indicating that you are in *package management mode*. You can now issue package management commands, such as `add`, `activate`, `instantiate`, etc. Tab works for autocomplete. You can try this out with the `status` command.
+
+To exit package management mode and return to the Julia prompt, simply press backspace or `Ctrl+C`.
+
+**Installing packages with the `Pkg` package**: Using any of the ways of running Julia outlined in the last chapter, you can manage package dependencies with the `Pkg` package. Again, any commands in the REPL are now available on `Pkg`, for example
+
+```{julia}
+using Pkg
+Pkg.status()
+```
+
+## Environment/package management in Julia
+
+Like is common with modern languages, Julia's package manager is usually used with isolated *environments* that are self-contained sets of dependencies for your projects. Each project or library has its own environment, managed independent of others, which prevents conflicts (e.g. between different projects that might require different versions of the same package). 
+
+### The Basics
+
+* **Adding Packages:** To add a new package to your current environment, you use the `add` command. For example, to add the `Plots` package:
+
+```
+julia> ]
+(@vX.X) pkg> add Plots
+```
+
+Or, using the `Pkg` module:
+
+```julia
+using Pkg
+Pkg.add("Plots")
+```
+
+Julia will download the package and its dependencies, and add them to your environment.
+
+* **Removing Packages:** To remove a package:
+
+```
+julia> ]
+(@vX.X) pkg> rm Plots
+```
+
+Or:
+
+```julia
+using Pkg
+Pkg.rm("Plots")
+```
+
+* **Updating Packages:** To update all packages in your current environment to their latest compatible versions:
+
+```
+julia> ]
+(@vX.X) pkg> up
+```
+
+Or:
+
+```julia
+using Pkg
+Pkg.up()
+```
+
+* **Checking Status:** The `status` command (or `Pkg.status()`) shows you which packages are currently in your environment and their versions.
+
+### Environments in Detail
+
+When you first start Julia, you are in a default "global" environment. However, for serious project work, it's highly recommended to create a dedicated environment for each project. This provides several benefits:
+
+1.  **Reproducibility:** Ensures that anyone else working on your project (including you) can easily set up the exact same package versions, guaranteeing that the code runs identically.
+2.  **Isolation:** Prevents package conflicts. Project A might need `PackageX` version 1.0, while Project B needs `PackageX` version 2.0. Environments allow both to coexist on your system without dependency issues.
+3.  **Tidyness:** Keeps your global environment tidy, only containing packages you frequently use across many projects.
+
+### Creating and Activating Environments
+
+To create and activate a new environment for a project, navigate to your project directory in the terminal and then launch Julia:
+
+```sh
+cd MyJuliaProject/
+julia --project=.
+```
+
+The `--project=.` flag tells Julia to look for an environment in the current directory. If one doesn't exist, it will create one. You'll notice your package manager REPL prompt (enter `]` to switch to this mode) will change to reflect the new environment: `(@MyJuliaProject) pkg>`.
+
+Alternatively, within the Julia REPL or a script:
+
+```julia
+using Pkg
+# Activates an environment in the current directory.
+# If none exists, it initializes a new one.
+Pkg.activate(".")
+```
+
+Note also the Julia functions `pwd()`, `cd()`, `readdir()`, and the macro `@__DIR__`. You can look a the help for these and related filesystem functions [here](https://docs.julialang.org/en/v1/base/file/). Note also that you can change to shell in the REPL and then change directory via `;`.
+
+### `Project.toml` and `Manifest.toml`
+
+When you `add` packages to an environment, Julia automatically generates and updates two critical files in the root of your project directory:
+
+1. **`Project.toml`**: This file lists your *direct* dependencies and their compatible version ranges. It also contains metadata about your project itself, such as its name, unique identified (UUID), and version. It's concise and human-readable, making it easy to see the high-level requirements of your project.
+
+Example `Project.toml`:
+```toml
+name = "MyJuliaProject"
+uuid = "..."
+version = "0.1.0"
+
+[deps]
+Plots = "..."
+DataFrames = "..."
+```
+
+2. **`Manifest.toml`**: This file provides a complete, exact, and reproducible list of *all* dependencies (direct and transitive) used in your project, including their precise versions and cryptographic hashes. It's much longer and more detailed than `Project.toml`. This file is crucial for guaranteeing reproducibility. Due to its verbose and detailed structure, this file is rarely used by humans and you should almost never manipulate it by hand.
+
+Example `Manifest.toml` (simplified):
+
+```toml
+[[Plots]]
+uuid = "..."
+version = "1.38.6"
+git-tree-sha1 = "..."
+
+[[DataFrames]]
+uuid = "..."
+version = "1.6.1"
+git-tree-sha1 = "..."
+
+[[Plots.deps]] # Transitive dependency
+ColorSchemes = "..."
+...
+```
+
+### Applications vs Libraries (advanced)
+
+In Julia, package management differs slightly between applications and libraries. In this context, applications are programs intended to be run directly, whereas libraries are reusable collections of routines made to be embedded within applications.
+
+Applications will often include exact dependencies and include both `Project.toml` and `Manifest.toml` in version control systems (such as `git`) to guarantee an exact copy of the same dependencies are included on each installation.
+
+Libraries on the other hand are made to work within applications, and so must interoperate with a wider set of other libraries. That is, libraries need to be compatible with more than just one exact version of each of its dependencies (otherwise an application using several libraries would quickly fail to resolve dependencies if they depend on different versions of some transitive dependency). Libraries therefore often omit `Manifest.toml` from version control, and instead track compatibility via the `[compat]` section in `Project.toml`. An example can be found in the [`Project.toml` file of `JuMP.jl`](https://github.com/jump-dev/JuMP.jl/blob/master/Project.toml) (JuMP is a Julia library for mathematical optimization).
+
+### Instantiating Environments
+
+When you receive a Julia project from someone else (e.g. by cloning it from a Git repository), it should include the `Project.toml` and possibly a `Manifest.toml` file. To set up a compatible environment, you activate the project and then `instantiate` it:
+
+```bash
+cd TheirJuliaProject/
+julia --project=.
+```
+
+Then, within the Julia REPL:
+
+```
+(@TheirJuliaProject) pkg> instantiate
+```
+
+Or, within a script:
+
+```julia
+using Pkg
+Pkg.activate(".")
+Pkg.instantiate()
+```
+
+This command will download all necessary packages (and their exact versions if specified in `Manifest.toml`), ensuring that your environment is a replica of the original.
+
+### Comparison with Python
+
+*If you are not familiar with package management in Python, we recommend skipping this section.*
+
+In this section, we briefly compare package management in Julia and Python, so that those familiar with the latter can quickly get up and running in Julia.
+
+The core correspondence can be summarized as follows:
+
+* **Python Virtual Environments = Julia Environments/Projects:** Python uses `venv` or `conda` for creating isolated environments. In Julia, the concept is directly supported by the built-in package manager and is often referred to simply as an "environment" or a "project."
+* **Activating an environment:** In Python `source venv/bin/activate` = running Julia with `julia --project=.` or `Pkg.activate(".")`.
+* **Dependency Files `requirements.txt` = `Project.toml`:** Python projects commonly use `requirements.txt` to list direct dependencies. Julia uses `Project.toml`.
+* **Dependency Pinning `pip-compile/lockfiles` = `Manifest.toml`:** Python projects sometimes use `pip-tools` or other addons to `pip` to pin dependencies exactly (e.g. with a `requirements.in` vs `requirements.txt`). Julia `Manifest.toml` which is built into the language.
+* **Installing individual Dependencies `pip install package` = `Pkg.add("package")`:** In Python, one typically installs dependencies with `pip install package`: however note that this does not automatically list it in `requirements.txt`. In contrast, Julia's `Pkg.add("package")` adds it into `Package.toml`
+* **Installing project dependencies `source venv/bin/activate && pip install -r requirements.txt` = `Pkg.instantiate()`:** both will install dependencies listed in the dependency file (`requirements.txt` in Python, `Project.toml`/`Manifest.toml` in Julia).
+
+In essence, Julia's `Project.toml` and `Manifest.toml` combined with `Pkg.instantiate()` provide a more powerful and built-in mechanism for reproducible environments than the standard `venv` and `requirements.txt` workflow in Python, abstracting away some of the manual steps and providing stronger version locking. This reflects the fact that Julia's package managed is a generation or two newer than the one in Python. There have been advances in package management in Python, such as with the `uv` project, but these are nascent compared to the Julia built-in ecosystem.
+
+# Story: Computing Square Roots (multiple dispatch, types, LLVM)
+
+Let us now go through a "story" which happens to be computation of square roots (not too complex). As we explore this story we'll explore various aspects of the language, and surely get sidetracked as well, all with a goal of finding out more about Julia.
+
+The `sqrt` function computes square roots. Look at its help entry via `? sqrt`
+
+```{julia}
+sqrt(25)
+```
+
+We can also use an alias for `sqrt`:
+
+```{julia}
+#\sqrt + [TAB]
+√25
+```
+
+```{julia}
+x = sqrt(2)
+@show x, x^2
+
+x = sqrt(2f0) #32 bit float (Float32)
+@show x, x^2
+```
+
+What if we try $\sqrt{-1}$?
+
+```{julia}
+sqrt(-1)
+```
+
+But if we give a complex type as input:
+
+```{julia}
+sqrt(Complex(-1))
+```
+
+In Julia a **function** (such as `sqrt` or its alias `√`) can have **many methods**:
+
+```{julia}
+methods(sqrt)
+```
+
+```{julia}
+using InteractiveUtils
+@which sqrt(2)
+```
+
+```{julia}
+@which sqrt(2.0)
+```
+
+```{julia}
+@which sqrt(π*im) #\pi + [Tab]
+```
+
+What if we wanted to apply square root to several/many elements together? It is common to use the `.` broadcast operator. Here it is in the [docs](https://docs.julialang.org/en/v1/manual/arrays/#Broadcasting).
+
+```{julia}
+data = [i^2 for i in 0:10]
+sqrt.(data) # The "." broadcating operator
+```
+
+```{julia}
+x = 36
+@show x^0.5
+```
+
+In Julia's source code, in [`math.jl`](https://github.com/JuliaLang/julia/blob/7b64cec5385d9099762ad7449c340eaac4fccb41/base/math.jl#L626) you'll find the following in lines 626-629:
+
+```
+@inline function sqrt(x::Union{Float32,Float64})
+    x < zero(x) && throw_complex_domainerror(:sqrt, x)
+    sqrt_llvm(x)
+end
+```
+
+
+```{julia}
+@code_lowered sqrt(2.5)
+```
+
+Here `sqrt_llvm()` compiles to [Low Level Virtual Machine (LLVM)](https://en.wikipedia.org/wiki/LLVM), so while many functions in Julia are actually implemented in Julia, with square roots it is better to let the underlying compiler infrastructure (LLVM) handle square roots because it knows better how to compile it to machine-dependent assembly code; which is very fast. You can inspect this via the macros `@code_llvm` and `@code_native`.  
+
+This will generally look the same on different computer types (LLVM is hardware agnostic):
+
+```{julia}
+@code_llvm sqrt(2.5)
+```
+
+This will look different for different computer types (cpus/architectures):
+
+```{julia}
+@code_native sqrt(2.5)
+```
+
+However, what if we wanted to do square roots via software? For example,
+
+```{julia}
+sqrt(big(10)^100)
+```
+
+What are (in principle) some [methods to compute square roots](https://en.wikipedia.org/wiki/Methods_of_computing_square_roots)? Let's look at them and implement them.
+
+One method is the [Babylonian algorithm](https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method): Say we are given a positive real number $z$ and want its square root. We start with an initial guess $x_0$. We then apply the recursive step,
+
+$$
+x_{k+1} = \frac{1}{2}\Big(x_k+\frac{z}{x_k}\Big).
+$$
+That is, at each step the next iterate is the arithmetic mean of the previous iterate, $x_k$, and $z/x_k$. The Babylonian algorithm runs this iteration until convergence (note the default initial guess in this implementation is $z/2$):
+
+```{julia}
+function bab_sqrt(z ; init_x = z/2, verbose = false, tol = 1e-10)
+    x = init_x
+    while true
+        verbose && println("Babylonian iterate: $x")
+        next_x = 0.5*(x + z / x)
+        abs(next_x - x) < tol && break
+        x = next_x
+    end
+    x
+end
+
+bs, s = bab_sqrt(5000;verbose = true), sqrt(5000)
+println("Babylonian:\t$bs\nSystem:\t\t$s")
+```
+
+## Newton's method
+
+We can view the ancient Babylonian method as an application of the more general [Newton's method](https://en.wikipedia.org/wiki/Newton%27s_method) for solving equations. Our goal is to solve $x^2 = z$ where $z$ is given and $x$ is desired. That is define $f(x) = x^2 - z$ and we wish to find the solution of $f(x) = 0$. Newton's method iterates,
+
+$$
+x_{k+1} = x_k - \frac{f(x_k)}{f'(x_k)},
+$$
+
+based on an affine (linear) approximation of $f(\cdot)$ at the point $x_k$. Here $f'(\cdot)$ is the derivative, which in our case is $f'(x) = 2x$. So Newton's iterates for finding the square root are,
+
+$$
+x_{k+1} = x_k - \frac{x_k^2-z}{2 x_k} = \frac{x_k}{2} + \frac{z}{2x_k} = \frac{1}{2}\Big(x_k+\frac{z}{x_k}\Big).
+$$
+
+```{julia}
+function newton(f, x_0::Real, der_f; ε = 10e-5, maxiter = 100) #\varepsilon
+    x = x_0
+    x_prev = x + 2ε
+    iter = 0
+    while abs(x-x_prev) ≥ ε #\ge
+        x_prev = x
+        x = x - f(x)/der_f(x)
+        iter += 1
+        if iter == maxiter 
+            @info "Maximal number of iterations reached"
+            break
+        end
+    end
+    return x
+end
+
+my_root2 = newton((x)->(x^2 - 2), 3, (x)->2x)
+@show my_root2
+@show √2
+√2 ≈ my_root2  #\approx
+```
+
+What if we don't (easily) know the derivative?
+```{julia}
+f(x) = sqrt(log(sin(exp(cos((x/5)^2)*log(x/5)+x^7))) + 1)-1/2
+plot(f,xlim=(0.95,1.05), xlabel = "x", ylabel="f(x)", label=false)
+```
+
+Let's use automatic differentiation (see for example Section 4.4 [here](https://deeplearningmath.org/)).
+
+```{julia}
+# import the `derivative` function from the `ForwardDiff` package
+using ForwardDiff: derivative
+auto_der = derivative(f, 0.95)
+
+h_val = 0.0001
+numer_der = (f(0.95+h_val) - f(0.95-h_val))/(2h_val)
+auto_der, numer_der
+```
+
+```{julia}
+function newton(f, 
+                x_0::Real, 
+                der_f  = (x)->derivative(f, x); 
+                ε = 10e-8, 
+                maxiter = 100)
+    x = x_0
+    x_prev = x + 2ε
+    iter = 0
+    while abs(x-x_prev) ≥ ε
+        x_prev = x
+        x = x - f(x)/der_f(x)
+        iter += 1
+        if iter == maxiter 
+            @info "Maximal number of iterations reached"
+            break
+        end
+    end
+    return x
+end
+
+root_point = newton(f,0.95)
+println("Found root: $root_point")
+plot(f,xlim=(0.95,1.05), xlabel = "x", ylabel="f(x)", label=false)
+scatter!([root_point], [0], color=:red, marker=:circle, label="Root found")
+```
+
+## A bit more on numerics
+
+We now focus on floating point numbers (we ignore in this section certain minutiae of subnormal numbers, etc). This is the [double-precision floating-point format](https://en.wikipedia.org/wiki/Double-precision_floating-point_format). Before we get into the details, here are some illustrations on how it is represented in memory:
+
+```{julia}
+function pretty_print_float(x::Float64)
+  bits = bitstring(x)
+  println("Sign: ", bits[1])
+  println("Exponent: ", bits[2:12])
+  println("Significand: ", bits[13:64])
+end
+
+x = 15.324
+@show typeof(x)
+@show sizeof(x)
+@show bitstring(x);
+pretty_print_float(x)
+
+ex = exponent(x)
+sig = significand(x)
+@show ex, sig
+@show 2^ex * sig;
+```
+
+And this is the [single-precision floating-point format](https://en.wikipedia.org/wiki/Single-precision_floating-point_format):
+
+```{julia}
+function pretty_print_float(x::Float32) #Notice this is a second method of pretty_print_float
+  bits = bitstring(x)
+  println("Sign: ", bits[1])
+  println("Exponent: ", bits[2:9])
+  println("Significand: ", bits[10:32])
+end
+
+x = 15.324f0
+@show typeof(x)
+@show sizeof(x)
+@show bitstring(x);
+pretty_print_float(x)
+
+ex = exponent(x)
+sig = significand(x)
+@show ex, sig
+@show 2^ex * sig;
+```
+We would ideally like to represent any number on the real line ${\mathbb R}$ via a finite number of bits with the computer. However, this is not possible and any numerical representation of a number $x \in {\mathbb R}$ is only approximated via a number $\tilde{x} \in {\mathbb F}$ where ${\mathbb F}$ is the set of  **floating point numbers**. Each such floating point number is represented as,
+$$
+\tilde{x} = \pm (1+f) 2^e,
+$$
+where $e$ is a (signed) integer called the **exponent** and $1+f$ is the **mantissa** (or **significand**). The value $f$ is represented as,
+$$
+f = \sum_{i=1}^d b_i 2^{-i},
+$$
+where $b_i \in \{0,1\}$ and $d$ is a fixed positive integer counting the number of bits used for the mantissa.
+
+Hence the mantissa, $1+f$, lies in the range $[1,2)$ and is represented in binary form. By multiplying the equation above by $2^{-d}$ we have,
+$$
+f = 2^{-d} \Big(\sum_{i=1}^d b_i 2^{d-i} \Big) = 2^{-d} z.
+$$
+Hence $z \in \{0,1,2,\ldots,2^d-1\}$. This means that between $2^e$ and ending just before $2^e-1$ there are exactly $2^d$ evenly spaced numbers in the set ${\mathbb F}$.
+
+Observe now that the smallest element of ${\mathbb F}$ that is greater than $1$ is $1+2^{-d}$. This motivates defining [machine epsilon](https://en.wikipedia.org/wiki/Machine_epsilon) as $\varepsilon_{\text{mach}} = 2^{-d}$.
+
+The [IEEE 754 double precision standard](https://en.wikipedia.org/wiki/Double-precision_floating-point_format) has $d=52$ bits and single precision (`Float32`) has $d=23$ bits. Hence with `Float64` variables we have
+$$
+\varepsilon_{\text{mach}} = 2^{-52} \approx 2.2 \times 10^{-16}.
+$$
+
+```{julia}
+@show eps() #Default is for Float64
+@show eps(Float32)
+@show eps(Float16)
+```
+
+```{julia}
+@show 2^(-52)
+@show 2^(-23)
+@show 2^(-10);
+```
+
+We can suppose there is some (mathematical) function $\text{fl}: {\mathbb F} \to {\mathbb R}$ where $\text{fl}(x)$ takes a real number $x$ and maps it to the nearest $\tilde{x}$ in ${\mathbb F}$. For positive $x$ it lies in the interval $[2^e,2^{e+1})$ where the spacing between the elements is $2^{e-d}$. Hence $|\tilde{x} - x| \le \frac{1}{2} 2^{e-d}$. We can now consider the relative error between $\tilde{x}$ and $x$:
+$$
+\frac{|\tilde{x} - x|}{|x|} \le \frac{2^{e-d-1}}{2^e} \le \frac{1}{2} \varepsilon_{\text{mach}}.
+$$
+
+An equivalent statement states that for any $x \in {\mathbb R}$ (within the range of the exponent), there is a $\varepsilon$ where $|\varepsilon| \le \frac{1}{2} \varepsilon_{\text{mach}}$ and,
+$$
+\text{fl}(x) = x (1+ \varepsilon).
+$$
+
+Here is an example that looks at the irrational square roots of $\{1,2,3,\ldots,100\}$ and estimates the $\varepsilon$ associated with $\text{fl}(x)$ for each of these square roots. The example does this for `Float32` values and uses `Float64` as an approximation of the absolute truth. The two black bars are at $\pm \frac{1}{2} \varepsilon_{\text{mach}}$.
+
+```{julia}
+non_squares = setdiff(1:100,[i^2 for i in 1:100])
+x̃ = sqrt.(Float32.(non_squares)) #x + \tilde + [TAB] 
+x = sqrt.(non_squares) #Lets treat 64 bit as infinite precision
+ϵ = x̃ ./ x .- 1  #\epsilon + [TAB]
+scatter(non_squares,ϵ,legend=false,xlabel = "Attempt", ylabel="Approximation of ϵ")
+plot!([(x)->0.5*eps(Float32) (x)->-0.5eps(Float32)],
+    c=:black,ylim=(-0.7*eps(Float32), 0.7*eps(Float32)))
+```
+
+Going back to `Float64` (double precision) we have 52 bits in the mantissa. $11$ bits for the exponent $e$ and a single sign bit. This makes $64$ bits. There are also some special values:
+
+```{julia}
+bitstring(0/0) #NaN
+```
+
+```{julia}
+bitstring(1/0) #Inf
+```
+
+```{julia}
+bitstring(-1/0) #-Inf
+```
+
+
+# Story: Computing Factorials (special functions, big numbers, more on types)
+
+Let's move to another "story", this time factorials.
+
+A few basic ways to compute $10! = 1\cdot 2 \cdot \ldots \cdot 10$:
+
+```{julia}
+f_a = factorial(10)
+@show f_a
+
+f_b = *(1:10...)
+@show f_b
+
+f_c = last(accumulate(*,1:10))
+@show f_c
+
+f_d = 1
+for i in 1:10
+    f_d *= i
+end
+@show f_d;
+
+f_e = prod(1:10)
+@show f_e
+
+f_g = round(Int, exp(sum(log.(1:10))))
+@show f_g;
+```
+
+Observe that,
+
+$$
+n! = 
+\begin{cases}
+n \cdot (n-1)! & n = 1,2,\ldots\\
+1 & n = 0.
+\end{cases}
+$$
+
+This is a recursive definition. Let's implement it:
+
+```{julia}
+function my_factorial(n)
+    if n == 0
+        return 1
+    else
+        return n * my_factorial(n-1)
+    end
+end
+
+my_factorial(10)
+```
+
+Here is the same `my_factorial()` function (written compactly).
+
+```{julia}
+my_factorial(n) = n == 0 ? 1 : n*my_factorial(n-1)
+
+my_factorial(10)
+```
+
+Such compact writing does not change what actually happens under the hood. To see this consider both forms:
+
+```{julia}
+my_factorial1(n) = n == 0 ? 1 : n*my_factorial1(n-1)
+
+function my_factorial2(n)
+    if n == 0
+        return 1
+    else
+        return n * my_factorial2(n-1)
+    end
+end;
+```
+
+Let's use Julia's `@code_lowered` macro to see how Julia parses the code into an intermediate representation (before being further compiled to LLVM). In both forms we get the exact same intermediate form.
+
+```{julia}
+@code_lowered my_factorial1(10)
+```
+
+```{julia}
+@code_lowered my_factorial2(10)
+```
+
+How large can factorials we compute be? With `BigInt`, created via `big()`, there is sometimes no limit, but if we wanted to stay within the machine word size, we stay with `Int64` (with Julia `Int` is either `Int32` on "32 bit machines" or `Int64` on "64 bit machines"). But even 32 bit machines support 64 bit integers (by doubling words).
+
+Lets first use [Stirling's approximation](https://en.wikipedia.org/wiki/Stirling%27s_approximation) to get an estimate of the largest factorial we can compute with `UInt64`.
+
+$$
+n! \sim \sqrt{2 \pi} \, n^{n+\frac{1}{2}} e^{-n}
+$$
+
+```{julia}
+stirling(n) = (√(2π*n))*(n/MathConstants.e)^n      
+
+#An array of named tuples (note that "n!" is just a name)
+[(  n! = factorial(n), 
+    stirling = stirling(n), 
+    ratio = round(factorial(n)/stirling(n),digits = 5)) 
+    for n in 1:10]
+```
+
+Say want $n$ such taht $n!$ is not larger than,
+
+```{julia}
+typemax(UInt64), UInt(2)^64-1, float(typemax(UInt64))
+```
+
+See also the documentation about [Integers and Floating-Point Numbers](https://docs.julialang.org/en/v1/manual/integers-and-floating-point-numbers/#Integers-and-Floating-Point-Numbers).
+
+
+
+That is solve 
+$$
+\sqrt{2 \pi} \, n^{n+\frac{1}{2}} e^{-n}  = 2^{64}-1.
+$$
+
+We can do a simple search, but let's use the `Roots.jl` package:
+
+```{julia}
+using Roots
+stirling_sol = find_zero((x)->stirling(x)-typemax(UInt64), (1,64^64.0))
+max_n = floor(Int, stirling_sol)
+stirling_sol, max_n
+```
+
+Now let's see:
+
+```{julia}
+factorial(20) #ok
+```
+
+```{julia}
+factorial(21) #fails
+```
+
+Indeed $n=21$ doesn't fit within the 64 bit limit.  However as suggested by the error message, using `big()` can help:
+
+```{julia}
+typeof(big(21))
+```
+
+```{julia}
+factorial(big(21))
+```
+
+Just a check:
+
+```{julia}
+factorial(big(21))  == 21*factorial(big(20))
+```
+
+With (software) big integers everything goes:
+
+```{julia}
+n = 10^2
+big_stuff = factorial(big(n));
+num_digits = Int(ceil(log10(big_stuff))) 
+println("The facotrial of $n has $num_digits decimal digits.") 
+big_number = factorial(big(n))
+```
+
+Some ways to see this:
+
+```{julia}
+length(digits(big_number)), length("$big_number")
+```
+
+What about factorials of numbers that aren't positive integers?
+
+```{julia}
+factorial(6.5)
+```
+
+It's not defined. But you may be looking for the [gamma](https://en.wikipedia.org/wiki/Gamma_function) special function:
+
+$$
+\Gamma(z)=\int_{0}^{\infty} x^{z-1} e^{-x} d x.
+$$
+
+```{julia}
+using SpecialFunctions
+
+gamma(6.5)
+```
+
+To feel more confident this value agrees with the integral definition of $\Gamma(\cdot)$; let's compute the integral in a very crude manner (see [Riemann sums](https://en.wikipedia.org/wiki/Riemann_sum)):
+
+```{julia}
+function my_crude_gamma(z; δ = 0.01, M = 50) #\delta
+    integrand(x) = x^(z-1)*exp(-x) 
+    x_grid = 0:δ:M
+    sum(δ*integrand(x) for x in x_grid)
+end
+
+my_crude_gamma(6.5)
+```
+
+Or let's use a numerical integration package.
+
+```{julia}
+using QuadGK
+
+#second output of quadgk is the error estimate, so we just take the first
+my_better_crude_gamma(z) = quadgk(x -> x^(z-1)*exp(-x), 0 , Inf)[1] 
+
+my_better_crude_gamma(6.5)
+```
+
+Now note that the gamma function is sometimes considered as the continuous version of the factorial because,
+$$
+\begin{aligned}
+\Gamma(z+1) &=\int_{0}^{\infty} x^{z} e^{-x} d x \\
+&=\left[-x^{z} e^{-x}\right]_{0}^{\infty}+\int_{0}^{\infty} z x^{z-1} e^{-x} d x \\
+&=\lim _{x \rightarrow \infty}\left(-x^{z} e^{-x}\right)-\left(-0^{z} e^{-0}\right)+z \int_{0}^{\infty} x^{z-1} e^{-x} d x \\
+&=z \, \Gamma(z).
+\end{aligned}
+$$
+
+That is, the recursive relationship $\Gamma(z+1) = z\Gamma(z)$ holds similarly to $n! = n \cdot (n-1)!$. Further 
+$$
+\Gamma(1) = \int_0^\infty e^{-x} \, dx = 1.
+$$
+Hence we see that for integer $z$, $\Gamma(z) = (z-1)!$ or $n! = \Gamma(n+1)$. Let's try this.
+
+```{julia}
+using SpecialFunctions
+[(n = n, n! = factorial(n), Γ = gamma(n+1)) for n in 0:10]
+```
+
+The gamma function can also be extended outside of the positive reals. However, it is not defined at some singularity points.
+
+```{julia}
+@show gamma(-1.1) #here defined.
+gamma(-1) #here not defined
+```
+
+Here is a plot, excluding some points where it isn't defined
+
+```{julia}
+using Plots, SpecialFunctions
+
+z = setdiff(-3:0.001:4, -3:0) #setdifference to remove points where gamma() returns a NaN   
+plot(z,gamma.(z), ylim=(-7,7),legend=false,xlabel="z",ylabel = "Γ(z)")
+```
+
+Can also do,
+
+```{julia}
+gamma(2+3im)
+```
+
+Related is obviously the Gamma distribution which uses the gamma function as part of the normalizing constant:
+
+```{julia}
+using Distributions
+
+d = Gamma(2,5)
+mean_d = mean(d)
+plot(x->pdf(d, x), xlim = (0,30), 
+            label = false, 
+            xlabel="x", 
+            ylabel="Gamma density", 
+            fillrange = 0,
+            alpha=0.5)
+vline!([mean_d], color=:red, linestyle=:dash, label="Mean = $mean_d")
+```
+
+```{julia}
+@doc Gamma
+```
+
+The density is,
+
+$$
+\frac{x^{\alpha-1} e^{-x/\theta}}{\Gamma(\alpha) \theta^\alpha},
+$$
+
+So in a contrived way we can extract the gamma function back out (e.g. at $x=1$ and $\theta=1$):
+
+```{julia}
+my_extracted_gamma(z) =  1 / (MathConstants.e *pdf(Gamma(z,1), 1)) 
+my_extracted_gamma(6.5), gamma(6.5)
+```
+
+# More on Types
+
+Julia has an abstract type hierarchy (a tree). At the top of the tree is the type `Any`, which encompasses every possible value in Julia. All types have a supertype (the supertype of `Any` is `Any`). Types that are not leaves of the tree have subtypes. Some types are **abstract** while others are **concrete**. One particularly distinctive feature of Julia's type system is that concrete types may not subtype each other: all concrete types are final and may only have abstract types as their supertypes.
+
+```{julia}
+x = 2.3
+@show typeof(x)
+@show supertype(Float64)
+@show supertype(AbstractFloat)
+@show supertype(Real)
+@show supertype(Number)
+@show supertype(Any);
+```
+
+The **is a** relationship tells if an expression is of a given type:
+
+```{julia}
+isa(2.3, Number)
+```
+
+```{julia}
+isa(2.3, String)
+```
+
+```{julia}
+2.3 isa Float64
+```
+
+Note that `x isa T` is the same as `typeof(x) <: T`, where we say `<:` as "is a subtype of".
+
+```{julia}
+@show Float64 <: Number
+@show String <: Number;
+```
+
+We can ask whether a given type is abstract or concrete.
+
+```{julia}
+@show isabstracttype(Float64)
+@show isconcretetype(Float64);
+```
+
+```{julia}
+@show isabstracttype(Real)
+@show isconcretetype(Real);
+```
+
+Structs with undefined type parameters are not concrete:
+
+```{julia}
+@show isconcretetype(Complex);
+```
+
+Once we provide the type parameters we do get a concrete type:
+
+```{julia}
+@show isconcretetype(Complex{Float64});
+```
+
+As mentioned, Julia has a type tree. Let's walk down from `Number`:
+
+```{julia}
+using InteractiveUtils: subtypes
+
+function type_and_children(type, prefix = "", child_prefix = "")
+    if isconcretetype(type)
+        @assert isempty(subtypes(type))
+
+        println(prefix, type, ": concrete")
+    else
+        println(prefix, type, isabstracttype(type) ? ": abstract" : ": parameterized")
+
+        children = subtypes(type)
+        for (i, c) in enumerate(children)
+            if i == length(children)
+                type_and_children(c, "$(child_prefix) └─╴", "$(child_prefix)    ")
+            else
+                type_and_children(c, "$(child_prefix) ├─╴", "$(child_prefix) │  ")
+            end 
+        end
+    end
+end
+
+type_and_children(Number)
+```
+
+In Julia, you can define abstract types with the `abstract type` keywords:
+
+```julia
+abstract type Number
+end
+
+abstract type Real <: Number
+end
+
+abstract type AbstractFloat <: Real
+end
+
+primitive type Float64 <: AbstractFloat
+    64
+end
+```
+
+## Parameterized / generic types
+
+We've actually now seen all three types of abstract types in Julia – the `abstract type`s that make up the type tree, the `Union` type, and the parameterized types (abstract `Complex` vs concrete `Complex{Float64}`).
+
+Actually `Complex` is a shorthand. It's full type is written like this:
+
+```julia
+Complex{T} where T <: Real
+```
+
+This object is of type `UnionAll`:
+
+```{julia}
+typeof(Complex)
+```
+
+You can read this like "The abstract type which is the union of the concrete types `Complex{T}` for all possible `T <: Real`" – hence the shorthand `UnionAll`. Parameterised types can have bounds, like the components of complex numbers being real numbers.
+
+```{julia}
+@show Complex{Float64} <: Complex
+@show isconcretetype(Complex)
+@show isconcretetype(Complex{Float64});
+```
+
+Julia is pretty capable at figuring out the subtype (or subset) relationships:
+
+```{julia}
+(Complex{T} where T <: AbstractFloat) <: Complex
+```
+
+which follow from `AbstractFloat <: Real`.
+
+You've seen other `UnionAll` types like `Vector`, `Matrix`, `Set`, `Dict`, etc.
+
+Don't worry about this seeming complex – consider this background material!
+
+## Union types
+
+We saw earlier that Julia has a third abstract type called `Union` which lets you reason about a finite set of (abstract or concrete) types.
+
+```{julia}
+42::Union{Int, Float64}
+```
+
+```{julia}
+3.14::Union{Int, Float64}
+```
+
+```{julia}
+"abc"::Union{Int, Float64}
+```
+
+`Union` can handle an arbitrary number of types, `Union{T1, T2, T3, ...}`.
+
+As a special case `Union{T}` is just the same as `T`. We also have `Union{T, T} == T`, etc.
+
+The union of no types at all, `Union{}`, is a special builtin type which is the opposite of `Any`. No value can exist with type `Union{}`! Sometimes `Any` is called the "top" type and `Union{}` is called the "bottom" type. It's used internally by the compiler to rule out impossible situations, but it's not something for you to worry about.
+
+You've now seen _every possible concrete type_ and _every possible abstract type_ in all of Julia. You've also looked a functions, methods and multiple dispatch.
+
+# Integrating with R and Python
+
+In general, Python and R, are each more popular than Julia. Python dominates the machine learning world as well as many other fields. R dominates the statistical analysis world. Yet, packages in both of these languages of rely on low level languages for efficient computation.
+
+In some instances Julia may play a role as such a "low level" languages, and one can consider creating packages in Julia and wrapping them in Python and R. This is the case with Julia's famous [DifferentialEquations.jl](https://github.com/SciML/DifferentialEquations.jl) package. In R it is wrapped with [diffeqr](https://github.com/SciML/diffeqr) and in Python with [diffeqpy](https://github.com/SciML/diffeqpy). 
+
+As a side note, we mention that one thing that is keeping Julia from being a very useful "lower level" platform is the size of the system runtime binary. A long discussion about this is [here](https://discourse.julialang.org/t/roadmap-for-small-binaries/99266/122). Also, you may find this [video](https://www.youtube.com/watch?v=R0DEG-ddBZA) interesting, as it highlights progress in reducing the binary size. However, Julia binary reduction is still work-in-progress, so stay tuned for developments on this front. Having small binaries may be important for enabling Julia to be easily wrapped within R and Python.
+
+Still, even with the current state of affairs, let's see some basic examples of integrations with Python and R. You may also find the [JuliaInterop organization](https://github.com/JuliaInterop) useful.
+
+## Starting as R users with diffeqr
+
+Let's see a basic example of using the [diffeqr](https://github.com/SciML/diffeqr) R package. 
+
+Note that on a Mac M2 machine, we actually had trouble getting this package to work with the latest R version, `R-4.5.0-arm64.pkg`. In fact, after some investigation we had to revert to version R version `4.3.3`! This may be a `JuliaCall` issue, an `R` issue, a `diffeqr` issue, or any of the three possibilities. In any case we opened, this [issue](https://github.com/SciML/diffeqr/issues/49) with `diffeqr`. 
+
+With version `4.3.3` of R installed, and `diffeqr` reintalled in R `install.packages("diffeqr")`, the outputs as appearing in the README of [diffeqr](https://github.com/SciML/diffeqr) are reproduced. 
+
+First you run (in R):
+
+```
+de <- diffeqr::diffeq_setup()
+```
+
+Now before we do anything ruther look at the [R source code for `diffeq_setup`](https://github.com/SciML/diffeqr/blob/48114db6bd17aeacada3eb7311be153d00bc2913/R/diffeqr.R#L20C1-L33C2). This can give you an indication of the use of the R package, `JuliaCall`. Indeed after you run the above R line (assuming nothing is breaking), you may inspect `de` in R-Studio, by typing `de$`. You'll see a pop-up menu with all of the symbols exposed from DifferentialEquations.jl.
+
+Now type:
+
+```
+prob = de$ODEProblem(function(u, p, t) log(2) * u,  10, c(0., 4.))
+```
+
+This creates an ordinary differential equation (ODE) problem, $f'(u) =  \log(2) u$ with $f(0) = 10$, and a time horizon of $[0,4]$. It is an ODE that should double everytime unit. 
+
+For example if you type, `prob`, you'll see,
+
+```
+function(u, p, t) log(2) * u
+Julia Object of type ODEProblem{Float64, Tuple{Float64, Float64}, false, SciMLBase.NullParameters, ODEFunction{false, SciMLBase.AutoSpecialize, RCall.RFunction{RObject{ClosSxp}}, UniformScaling{Bool}, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, typeof(SciMLBase.DEFAULT_OBSERVED), Nothing, SymbolicIndexingInterface.SymbolCache{Nothing, Nothing, Nothing}}, Base.Pairs{Symbol, Union{}, Tuple{}, NamedTuple{(), Tuple{}}}, SciMLBase.StandardODEProblem}.
+ODEProblem{Float64, Tuple{Float64, Float64}, false, SciMLBase.NullParameters, ODEFunction{false, SciMLBase.AutoSpecialize, RCall.RFunction{RObject{ClosSxp}}, UniformScaling{Bool}, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, typeof(SciMLBase.DEFAULT_OBSERVED), Nothing, SymbolicIndexingInterface.SymbolCache{Nothing, Nothing, Nothing}}, Base.Pairs{Symbol, Union{}, Tuple{}, NamedTuple{(), Tuple{}}}, SciMLBase.StandardODEProblem}(ODEFunction{false, SciMLBase.AutoSpecialize, RCall.RFunction{RObject{ClosSxp}}, UniformScaling{Bool}, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, typeof(SciMLBase.DEFAULT_OBSERVED), Nothing, SymbolicIndexingInterface.SymbolCache{Nothing, Nothing, Nothing}}(RCall.RFunction{RObject{ClosSxp}}(RObject{ClosSxp}
+), UniformScaling{Bool}(true), nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing, SciMLBase.DEFAULT_OBSERVED, nothing, SymbolicIndexingInterface.SymbolCache{Nothing, Nothing, Nothing}(nothing, nothing, nothing)), 10.0, (0.0, 4.0), SciMLBase.NullParameters(), Base.Pairs{Symbol, Union{}, Tuple{}, NamedTuple{(), Tuple{}}}(), SciMLBase.StandardODEProblem())
+```
+
+While this may appear like a-lot of junk (it is!), it shows you that there is some "Julia living in R".
+
+You can now run:
+
+```
+sol = de$solve(prob)
+```
+
+Then when you inspect `sol$t` you get:
+
+```
+[1] 0.0000000 0.1076078 0.4336223 0.9016389 1.4599310 2.1409919 2.9241760 3.8122657 4.0000000
+```
+
+And with `sol$u` you get:
+
+```
+[1]  10.00000  10.77440  13.50620  18.68187  27.50952  44.10650  75.90388 140.47676 159.99933
+```
+
+Note that at time $t=4$ we get that the ODE is at about $160$ as expected.
+
+Now see the README of [diffeqr](https://github.com/SciML/diffeqr) fo more interesting examples.
+
+## Integration with R
+
+Let's see JuliaCall and RCall.jl. Note that an alternative is ofcouse to run Julia, save outputs in JSON files, CSV files, Databases etc..., and read the input from R. And/or vice-versa. 
+
+### JuliaCall example in R
+
+The main tool to invoke Julia from R is the `JuliaCall` R package. See it on [CRAN](https://cran.r-project.org/web/packages/JuliaCall/index.html), or the [`JuliaCall` GitHub repo](https://github.com/JuliaInterop/JuliaCall).
+
+Here is an example directly from the README of JuliaCall (this is R code):
+
+```
+library(JuliaCall)
+julia <- julia_setup()
+#> Julia version 1.11.1 at location C:\Users\lichangcheng\.julia\juliaup\julia-1.11.1+0.x64.w64.mingw32\bin will be used.
+#> Loading setup script for JuliaCall...
+#> Finish loading setup script for JuliaCall.
+
+## If you want to use `Julia` at a specific location, you could do the following:
+## julia_setup(JULIA_HOME = "the folder that contains Julia binary").
+## You can also set JULIA_HOME in command line environment or use `options(...)`.
+
+## Different ways of using Julia to calculate sqrt(2)
+
+# julia$command("a = sqrt(2);"); julia$eval("a")
+julia_command("a = sqrt(2);"); julia_eval("a")
+#> [1] 1.414214
+julia_eval("sqrt(2)")
+#> [1] 1.414214
+julia_call("sqrt", 2)
+#> [1] 1.414214
+julia_eval("sqrt")(2)
+#> [1] 1.414214
+julia_assign("x", sqrt(2)); julia_eval("x")
+#> [1] 1.414214
+julia_assign("rsqrt", sqrt); julia_call("rsqrt", 2)
+#> [1] 1.414214
+2 %>J% sqrt
+#> [1] 1.414214
+
+## You can use `julia$exists` as `exists` in R to test
+## whether a function or name exists in Julia or not
+
+julia_exists("sqrt")
+#> [1] TRUE
+julia_exists("c")
+#> [1] FALSE
+
+## Functions related to installing and using Julia packages
+
+julia_install_package_if_needed("Optim")
+julia_installed_package("Optim")
+#> [1] "1.9.4"
+julia_library("Optim")
+```
+
+### RCall.jl example in Julia
+
+In Julia the main tool for interfacing with R is [RCall.jl](https://github.com/JuliaInterop/RCall.jl). The key docs are [here](https://juliainterop.github.io/RCall.jl/stable/gettingstarted/). The main tools are the macros `@rput`, `@rget`, and the `R` string macro.
+
+```{julia}
+#| echo: true
+#| output: false
+using CSV, DataFrames, RCall
+
+data1 = CSV.read("../data/machine1.csv", header=false, DataFrame)[:,1]
+data2 = CSV.read("../data/machine2.csv", header=false, DataFrame)[:,1]
+data3 = CSV.read("../data/machine3.csv", header=false, DataFrame)[:,1]
+
+function R_ANOVA(allData)
+    data = vcat([ [x fill(i, length(x))] for (i, x) in
+    			enumerate(allData) ]...)
+    df = DataFrame(data, [:Diameter, :MachNo])
+    @rput df
+
+    R"""
+    df$MachNo <- as.factor(df$MachNo)
+    anova <- summary(aov( Diameter ~ MachNo, data=df))
+    fVal <- anova[[1]]["F value"][[1]][1]
+    pVal <- anova[[1]]["Pr(>F)"][[1]][1]
+    """
+    println("R ANOVA f-value: ", @rget fVal)
+    println("R ANOVA p-value: ", @rget pVal)
+end
+
+R_ANOVA([data1, data2, data3])
+```
+
+Note that if R is not installed then you will get output like:
+
+```
+[ Info: No R installation found by RCall.jl. Precompilation of RCall and all dependent packages postponed. Importing RCall will fail until an R installation is configured beforehand.
+```
+
+If R is installed you get output like:
+
+```
+R ANOVA f-value: 10.516968568709055
+R ANOVA p-value: 0.00014236168817139904
+```
+
+## Integration with Python
+
+For Python integration both tools exist together in [PythonCall.jl](https://github.com/JuliaPy/PythonCall.jl).
+This gives the Python package, `juliacall` and the Julia package, `PythonCall.jl`.
+
+An earlier tool is [PyCall.jl](https://github.com/JuliaPy/PyCall.jl). For example before [Plots.jl](https://github.com/JuliaPlots/Plots.jl) rose to popularity, plotting in Julia was via [PyPlot.jl](https://github.com/JuliaPy/PyPlot.jl) which wraps Python's [matplotlib](https://matplotlib.org/).
+
+See also the [JuliaPy](https://github.com/JuliaPy) organization.
+
+### JuliaCall example in Python
+
+This [guide](https://juliapy.github.io/PythonCall.jl/stable/juliacall/) presents the gist of using Julia from Python.
+
+As a simple example consider the Python file, [python_calling_julia.py](https://github.com/open-AIMS/Julia_ML_training/blob/main/unit1/python_calling_julia.py) which contains,
+
+```
+from juliacall import Main as jl
+
+# Run the Julia simulation
+jl.seval('include("simulator.jl")')
+result = jl.seval("simulate()")
+
+# Process the result in Python
+print("The result from the Julia simulation is: ", result)
+```
+
+Now the idea is that it uses an **efficient** Julia simulator in [simulator.jl](https://github.com/open-AIMS/Julia_ML_training/blob/main/unit1/simulator.jl):
+
+```
+function simulate()
+    for i in 1:3
+        sleep(1) #fast heavy julia simulation
+    end
+    return 42
+end
+```
+
+Now after you, `pip install juliacall`, if you try, `python python_calling_julia.py` (in the `unit1` folder), you'll see:
+
+```
+The result from the Julia simulation is:  42
+```
+
+### PythonCall example in Julia
+
+The other way around in Julia is via the `PythonCall.jl` package. The [guide](https://juliapy.github.io/PythonCall.jl/stable/pythoncall/) is useful.
+
+For example, try the code in the guide:
+
+```
+julia> using PythonCall
+
+julia> re = pyimport("re")
+Python: <module 're' from '[...]/lib/re.py'>
+
+julia> words = re.findall("[a-zA-Z]+", "PythonCall.jl is very useful!")
+Python: ['PythonCall', 'jl', 'is', 'very', 'useful']
+
+julia> sentence = Py(" ").join(words)
+Python: 'PythonCall jl is very useful'
+
+julia> pyconvert(String, sentence)
+"PythonCall jl is very useful"
+```
+
+
+# Additional online resources
+
+* See this [Blog post about the package manager](https://jkrumbiegel.com/pages/2022-08-26-pkg-introduction/) by [Julius Krumbiegel
+](https://github.com/jkrumbiegel).
+* See this [YouTube video](https://www.youtube.com/watch?v=4YhYHZbpkys) which nicely outlines how Julia compilation works.
+* Some of the materials in this unit are motivated by a University of Queensland Course, [Programming of Simulation, Analysis, and Learning (Data) Systems](https://courses.smp.uq.edu.au/MATH2504/). The course website for that course contains many more materials of this nature.
+* Integration with Wolfram Mathematica is via [MathLink.jl](https://github.com/JuliaInterop/MathLink.jl).
+* Calling C or Fortran directly within Julia is in-built. See the [documentation](https://docs.julialang.org/en/v1/manual/calling-c-and-fortran-code/).
+* Julia has garbage collection. See the [docs](https://docs.julialang.org/en/v1/devdocs/gc/).
+
+# Exercises
+
+1. Consider the `sort` and `sort!` functions.
+    - Read their documentation.
+    - Consider the `by` and `lt` arguments, and try these on an example.
+    - What if you try `sort(["a1", "a2", "a10"])`? Is there a nicer way? Look at [NaturalSort.jl](https://github.com/JuliaStrings/NaturalSort.jl), install it, and try it with `sort(["a1", "a2", "a10"], lt=natural)`.
+1. Compare the following expressions, all of which are the essentially same. For each case investigate how the expression is formed.
+    - `sqrt.(1:9)`
+    - `sqrt.(UnitRange(1,9))`
+    - `sqrt.(collect(1:9))`
+    - `(1:9).^(1/2)`
+    - `map(sqrt, 1:9)`
+    - `map(√, 1:9)`
+    - `[sqrt(i) for i in 1:9]`
+    - `sqrt.((1:9...,))`
+    - `vec(sqrt.(reshape(1:9,3,3)))`
+    - `sqrt.(values(NamedTuple{Tuple(Symbol.("x", 1:9))}(1:9)))`
+    - `exp.(log.(1:9)/2)`
+    - `2 .^(log2.(1:9)/2)`
+1. We've seen the [QuadGK.jl](https://github.com/JuliaMath/QuadGK.jl) package for 1d numerical integration. Now consider the [HCubature.jl](https://github.com/JuliaMath/HCubature.jl) package for multi-dimensional numerical integration. Try to use this package to compute the integral of `f(x::AbstractVector) = exp(x'x/2)` when `x` is a vector of dimensions, 2, 3, and 4, and the integation is over a truncation of all of Euclidean space. Note: You can verify your answer based on the normalizing constant of a multi-variate Gaussian distribution. 
+1. Read the [Julia documentation about functions](https://docs.julialang.org/en/v1/manual/functions/#man-functions). Try out specific examples presented.

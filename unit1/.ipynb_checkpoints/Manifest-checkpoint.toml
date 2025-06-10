@@ -2,7 +2,7 @@
 
 julia_version = "1.11.5"
 manifest_format = "2.0"
-project_hash = "7f646caba7f5083fa2f4a4de8248298856ecd04f"
+project_hash = "50ea890d76cc6fef847f1f2fc95095c966bc8674"
 
 [[deps.Accessors]]
 deps = ["CompositionsBase", "ConstructionBase", "Dates", "InverseFunctions", "MacroTools"]
@@ -81,17 +81,6 @@ weakdeps = ["JSON", "RecipesBase", "SentinelArrays", "StructTypes"]
     CategoricalArraysRecipesBaseExt = "RecipesBase"
     CategoricalArraysSentinelArraysExt = "SentinelArrays"
     CategoricalArraysStructTypesExt = "StructTypes"
-
-[[deps.Chain]]
-git-tree-sha1 = "8c4920235f6c561e401dfe569beb8b924adad003"
-uuid = "8be319e6-bccf-4806-a6f7-6fae938471bc"
-version = "0.5.0"
-
-[[deps.Cleaner]]
-deps = ["Tables"]
-git-tree-sha1 = "f0ebda9a8284c10ec10df406f669edca4c69892f"
-uuid = "caabdcdb-0ab6-47cf-9f62-08858e44f38f"
-version = "0.5.0"
 
 [[deps.CodecZlib]]
 deps = ["TranscodingStreams", "Zlib_jll"]
@@ -1281,18 +1270,6 @@ version = "0.1.1"
 deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 version = "1.11.0"
-
-[[deps.Tidier]]
-deps = ["Chain", "Cleaner", "DataFrames", "MacroTools", "Reexport", "ShiftedArrays", "Statistics"]
-git-tree-sha1 = "251298c9b705805b26e1ed0ee5f150155aafa818"
-uuid = "f0413319-3358-4bb0-8e7c-0c83523a93bd"
-version = "0.7.7"
-
-[[deps.TidierData]]
-deps = ["Chain", "Cleaner", "DataFrames", "MacroTools", "Reexport", "ShiftedArrays", "Statistics", "StatsBase"]
-git-tree-sha1 = "d48462f90a7e93ac3f9439b7c740831a84e6ecbe"
-uuid = "fe2206b3-d496-4ee9-a338-6a095c4ece80"
-version = "0.15.1"
 
 [[deps.TranscodingStreams]]
 git-tree-sha1 = "0c45878dcfdcfa8480052b6ab162cdd138781742"
