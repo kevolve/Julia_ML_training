@@ -901,7 +901,15 @@ p90(x) = quantile(x, .9)
 combine(groupby(df_clean, :Site), :WaterLevel => p90 ∘ skipmissing => :WaterLevelP90)
 ```
 
-# Dataframes - Transformations
+Let's plot the mean square error in prediction per site
+
+```{julia}
+mse_by_site = combine(groupby(df_clean, :Site), :SqResidual => mean ∘ skipmissing => :MSE)
+
+plot(mse_by_site.Site, mse_by_site.MSE, seriestype=:bar, xrotation=45, title="MSE in water level prediction by site")
+```
+
+## More Transformations
 
 Here are key operations:
 
