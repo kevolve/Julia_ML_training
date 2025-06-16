@@ -764,11 +764,11 @@ first(df, 5)
 Drop some redundant columns
 
 ```{julia}
-select!(df, [:Site, :Latitude, :Longitude, :Time, :WaterLevel, :Prediction, :Residual])
+select!(df, [:Site, :Latitude, :Longitude, :Time, :WaterLevel, :Prediction])
 first(df, 5)
 ```
 
-We can get the list of columns:
+Here is our list of columns:
 
 ```{julia}
 names(df)
@@ -788,14 +788,118 @@ Let's dive a bit deeper, what do we have?
 describe(df)
 ```
 
+What are the site names?
+
+```{julia}
+unique(df.Site)
+```
+
+A note on `String15`:
+
+```{julia}
+df.Site
+```
+
+Compute the squared error in prediction with `transform`
+
+```{julia}
+```
+
+Let's group by site
+
+```{julia}
+# groupby takes a dataframe and a list of columns to group by
+by_site = groupby(df, :Site)
+```
+
+This produces a grouped dataframe
+
+```{julia}
+typeof(by_site)
+```
+
+What's the mean water level per site?
+
+```{julia}
+# get the mean function
+using Statistics
+
+# enter ∘ with \circ TAB
+# combine takes the grouped df and a list of operations
+combine(by_site, :WaterLevel => mean ∘ skipmissing => :MeanWaterLevel)
+```
+
+Here we applied `mean(skipmissing(...))` to the `:WaterLevel` column.
+
+Let's plot the water level at some sites
+
+```{julia}
+using Plots
+
+my_sites = ["coombabahst", "russellislande", "rabybay"]
+
+p = plot(
+    xlabel="Time",
+    ylabel="Water Level",
+    title="Water Level Over Time for Selected Sites",
+    legend=:topleft
+)
+
+for group in by_site
+    site_name = group.Site[1] # Get the site name from the first row of the group
+    if site_name ∉ my_sites
+        continue
+    end
+    plot!(
+        p,
+        group.Time,
+        group.WaterLevel,
+        # Label for the legend
+        label=site_name,
+        linealpha=0.8,
+        linewidth=2
+    )
+end
+
+p
+```
+
 How many data points do we have per site?
 
 ```{julia}
-combine(groupby(df, :Site), nrow => :Count)
+combine(by_site, nrow => :Count)
 ```
 
+Let's compute the squared residual:
 
+```{julia}
+df[!, :SqResidual] = (df.WaterLevel - df.Prediction).^2
+```
 
+There were some sites with fully missing water levels
+
+```{julia}
+all_missing = combine(groupby(df, :Site), :WaterLevel => (x -> all(ismissing, x)) => :IsMissing)
+```
+
+```{julia}
+filter!(row -> row.IsMissing == false, all_missing)
+```
+
+```{julia}
+select!(all_missing, Not(:IsMissing))
+```
+
+```{julia}
+df_clean = innerjoin(df, all_missing, on=:Site)
+```
+
+Let's compute the 90th percentile of water level per site?
+
+```{julia}
+p90(x) = quantile(x, .9)
+combine(groupby(df_clean, :Site), :WaterLevel => p90 ∘ skipmissing => :WaterLevelP90)
+```
 
 # Dataframes - Transformations
 
@@ -840,8 +944,7 @@ There are two competing [JSON](https://en.wikipedia.org/wiki/JSON) libraries: [J
 using HTTP
 using JSON
 
-url = "https://jsonplaceholder.typicode.com/todos/1"  # Example JSON file on the web
-response = HTTP.get(url)
+response = HTTP.get("https://couchers.org/api/status")
 data = JSON.parse(String(response.body))
 
 println(data)
