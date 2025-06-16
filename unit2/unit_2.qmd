@@ -58,7 +58,7 @@ println("Population of Australia: ", population_australia)
 mars_pop_safe = get(pop, "Mars", nothing)
 ```
 
-We can also use `haskey`:
+Use `haskey` to check if the key exists:
 
 ```{julia}
 if haskey(pop, "United States")
@@ -88,7 +88,7 @@ println("Number of entries in pop: ", length(pop))
 
 # Iterating through a dictionary
 println()
-println(nIterating through pop:")
+println("Iterating through pop:")
 for (country, population) in pop
     println("$country: $population")
 end
@@ -96,7 +96,10 @@ end
 # Create a dictionary using the Dict constructor with pairs
 new_countries = Dict("Canada" => 38_000_000, "Mexico" => 126_000_000)
 println()
-println(nNew countries dictionary: ", new_countries)
+println("New countries dictionary: ", new_countries)
+
+# Note that `=>` constructs a pair:
+typeof(:s => 2)
 
 # Merging dictionaries (creates a new dictionary)
 merged_pop = merge(pop, new_countries)
@@ -136,6 +139,17 @@ println("Symmetric difference and intersection are subsets of the union: ",
         issubset(AsymDifferenceB,AunionB),", ", issubset(AintersectionB,AunionB))
 ```
 
+Internally, sets are a thin wrapper around dictionaries with no values:
+
+```julia
+# base/set.jl
+struct Set{T} <: AbstractSet{T}
+    dict::Dict{T,Nothing}
+
+    global _Set(dict::Dict{T,Nothing}) where {T} = new{T}(dict)
+end
+```
+
 ## Named tuples
 
 In addition to tuples (see [docs](https://docs.julialang.org/en/v1/manual/types/#Tuple-Types)), Julia has [named tuples](https://docs.julialang.org/en/v1/manual/types/#Named-Tuple-Types). Here are some examples:
@@ -150,6 +164,17 @@ my_stuff.gender
 
 Named tuples are also used as [keyword arguments](https://docs.julialang.org/en/v1/manual/functions/#Keyword-Arguments).
 
+```{julia}
+function my_function_kwargs(; keyword_arg1=default_value1, keyword_arg2=default_value2)
+    println("Keyword 1: $keyword_arg1")
+    println("Keyword 2: $keyword_arg2")
+end
+
+todays_args = (keyword_arg1="hello!", keyword_arg2="nothing")
+my_function_kwargs(; todays_args...)
+```
+
+An example with Plots:
 
 ```{julia}
 using Plots
@@ -165,9 +190,80 @@ plot(p1, p2, size=(700,300))
 
 ## Structs (Composite Types)
 
-You can obviously define your own types [see composite types in docs](https://docs.julialang.org/en/v1/manual/types/#Composite-Types). You can use `struct` which is by default immutable, or `mutable struct`. In terms of memory management, immutable types sit on the stack while mutable types sit on the heap and require allocations and garbage collection. 
+You can obviously define your own types [see composite types in docs](https://docs.julialang.org/en/v1/manual/types/#Composite-Types). You can use `struct` which is by default immutable, or `mutable struct`. In terms of memory management, immutable types sit on the stack while mutable types sit on the heap and require allocations and garbage collection.
 
-The [Parameters.jl](https://github.com/mauro3/Parameters.jl) package extends the functionality by automatically creating keyword based constructors for struct beyond the default constructors. 
+```{julia}
+struct Place
+  name::String
+  lon::Float64
+  lat::Float64
+end
+```
+
+```{julia}
+# Constructing Place instances
+new_york = Place("New York", -74.0060, 40.7128)
+brisbane = Place("Brisbane", 153.0251, -27.4698)
+townsville = Place("Townsville", 146.8169, -19.2581)
+
+println(new_york)
+println(brisbane)
+println(townsville)
+
+# access fields
+println("Latitude of new_york: ", new_york.lat)
+```
+
+We can also have constructors with logic
+
+```{julia}
+"""
+A fancier place that wraps longitude automatically
+"""
+struct FancyPlace
+  name::String
+  lon::Float64
+  lat::Float64
+
+  # Default constructor (provided automatically if no inner constructors are defined)
+  function FancyPlace(name::String, lon::Float64, lat::Float64)
+    # make sure longitude is in [-180,180)
+    wrapped_lon = mod(lon + 180, 360) - 180
+    # new is a special keyword used to create the actual struct instance
+    # It takes the values for the fields in the order they are defined in
+    # the struct, effectively calling the "primary" constructor
+    new(name, wrapped_lon, lat)
+  end
+
+  # Custom constructor for an "unnamed" place
+  FancyPlace(lon::Float64, lat::Float64) = FancyPlace("[unnamed]", lon, lat) # The `new` keyword calls the primary constructor
+end
+
+# Now we can use the new constructor
+unnamed_location = FancyPlace(1000.0, 20.0)
+println("\nUnnamed location: ", unnamed_location)
+println("Name of unnamed_location: ", unnamed_location.name)
+```
+
+We can add additional "outer" constructors, but they cannot call `new` directly. For example, suppose you use a GIS package with your own coordinates
+
+```{julia}
+struct WGS84Coordinates{T}
+  x::T
+  y::T
+end
+
+function FancyPlace(name::String, coords::WGS84Coordinates)
+    return FancyPlace(name, Float64(coords.x), Float64(coords.y))
+end
+
+zero_coords = WGS84Coordinates{Float32}(142.2, 11.35)
+mariana_trench = FancyPlace("Mariana Trench", zero_coords)
+
+@show mariana_trench
+```
+
+The [Parameters.jl](https://github.com/mauro3/Parameters.jl) package extends the functionality by automatically creating keyword based constructors for struct beyond the default constructors.
 
 ```{julia}
 using Parameters
@@ -186,17 +282,19 @@ Another useful macro based modification of the language is with the [Accessors.j
 ```{julia}
 using Accessors
 
-a = MyStruct(a= 10 ,c=4)
+a = MyStruct(a=10, c=4)
 @show a
 
 b = @set a.c = 0
 @show b;
+
+# but observe a is still untouched
+@show a
 ```
 
 ## Datastructures (not in the standard library)
 
-The [JuliaCollections](https://github.com/JuliaCollections) library provides other data structures. One useful package is [DataStructures.jl
-](https://github.com/JuliaCollections/DataStructures.jl). Let's use for example a heap for [heap sort](https://en.wikipedia.org/wiki/Heapsort) (note that this is only for illustrative purposes. The system's [sort](https://docs.julialang.org/en/v1/base/sort/) will be more efficient).
+The [JuliaCollections](https://github.com/JuliaCollections) library provides other data structures. One useful package is [DataStructures.jl](https://github.com/JuliaCollections/DataStructures.jl). Let's use for example a heap for [heap sort](https://en.wikipedia.org/wiki/Heapsort) (note that this is only for illustrative purposes. The system's [sort](https://docs.julialang.org/en/v1/base/sort/) will be more efficient).
 
 
 ```{julia}
@@ -208,7 +306,7 @@ function heap_sort!(a::AbstractArray)
     for e in a
         push!(h, e) #This is an O(log n) operation
     end
-    
+
     #Write back onto the original array
     for i in 1:length(a)
         a[i] = pop!(h) #This is an O(log n) operation
@@ -222,6 +320,21 @@ heap_sort!(data)
 @show heap_sort!(["Finland", "USA", "Australia", "Brazil"]);
 ```
 
+Again, note that this is a bunch slower than the standard lib sort:
+
+```{julia}
+using BenchmarkTools
+
+numbers = rand(10_000);
+```
+
+```{julia}
+@benchmark sort!(numbers)
+```
+
+```{julia}
+@benchmark heap_sort!(numbers)
+```
 
 # Basic text processing
 
@@ -237,10 +350,13 @@ split("Hello world!")
 ```
 
 ```{julia}
+# multiline blocks will clear up whitespace to make life nice with indentation
 my_life_story = """
-I was born
-in 1935.
-"""
+    I was born
+       in 1935.
+    """
+
+println(my_life_story)
 ```
 
 ```{julia}
@@ -257,6 +373,8 @@ end
 
 ## Regular Expressions
 
+Julia has built-in regex!
+
 ```{julia}
 text = "Julia is fun!"
 pattern = r"Julia"
@@ -264,14 +382,59 @@ occursin(pattern, text)   # true
 ```
 
 ```{julia}
-text = "Order number: 12345, Qty: 67"
-pattern = r"\d+"
-numbers = collect(m.match for m in eachmatch(pattern, text))
+text = "Call me at 0468879289 when I'm home, or 0468879555 if I'm at work"
+for m in eachmatch(r"04\d{8}", text)
+  println("Found phone number $(m.match)")
+end
+```
+
+## Reading and writing files
+
+The `open` function is your primary tool, often used with `do` blocks to ensure files are automatically closed.
+
+To **write** text to a file:
+
+```{julia}
+open("work/my_output.txt", "w") do io
+    write(io, "Hello from Julia!\n")
+    write(io, "This is a second line.")
+end
+```
+
+Here, `"w"` signifies "write mode." If the file doesn't exist, it's created; if it does, its contents are overwritten.
+
+To **append** text to an existing file:
+
+```{julia}
+open("work/my_output.txt", "a") do io
+    write(io, "\nAppending a new line.")
+end
+```
+
+The `"a"` mode means "append." New stuff is added to the end of the file.
+
+To **read** the entire content of a file:
+
+```{julia}
+file_content = read("work/my_output.txt", String)
+println(file_content)
+```
+
+The `read` function with `String` as the type argument reads the whole file into a single string.
+
+For reading a file line by line, which is more memory-efficient for large files:
+
+```{julia}
+open("work/my_output.txt", "r") do io
+    for line in eachline(io)
+        println("Line: ", line)
+    end
+end
 ```
 
 ## Some extras
 
-The [Printf](https://docs.julialang.org/en/v1/stdlib/Printf/) package is in-built and provides formatted output functions similar to the C standard library.
+The [Printf](https://docs.julialang.org/en/v1/stdlib/Printf/) package is built-in and provides formatted output functions similar to the C standard library.
 
 Strings are related to IO. See the [I/O and Network docs](https://docs.julialang.org/en/v1/base/io-network/). Something quite common is to use `flush(stdout)`.
 
@@ -279,45 +442,360 @@ Sometimes when writing test code we want strings to be approximately equal. For 
 
 Consider the [YAML.jl](https://github.com/JuliaData/YAML.jl) package for [YAML files](https://en.wikipedia.org/wiki/YAML).
 
-# Dataframes and CSV files - intro
+# Dataframes
 
-Dataframes are huge subject. The Julia [Dataframes.jl](https://github.com/JuliaData/DataFrames.jl) package provides functionality similar to [Python pandas](https://en.wikipedia.org/wiki/Pandas_(software)) or [R dataframes](https://www.geeksforgeeks.org/r-data-frames/). Here are the common packages in this ecosystem:
+Dataframes are huge subject. The Julia [Dataframes.jl](https://github.com/JuliaData/DataFrames.jl) package provides functionality similar to [Python pandas](https://en.wikipedia.org/wiki/Pandas_(software)) or [R dataframes](https://www.geeksforgeeks.org/r-data-frames/).
 
-* [DataFrames.jl](https://github.com/JuliaData/DataFrames.jl) - the main dataframes package.
-* [DataFramesMeta.jl](https://github.com/JuliaData/DataFramesMeta.jl) - metaprogramming tools for DataFrames.jl objects.
-* [CSV.jl](https://github.com/JuliaData/CSV.jl) - read and write to CSV files.
-* [CategoricalArrays.jl](https://github.com/JuliaData/CategoricalArrays.jl) - provides tools for working with categorical variables, both with unordered (nominal variables) and ordered categories (ordinal variables), optionally with missing values.
-* [Chain.jl](https://github.com/jkrumbiegel/Chain.jl) - provides a useful macro rewrites a series of expressions into a chain.
-* [XLSX.jl](https://github.com/felipenoris/XLSX.jl) - Excel file reader/writer for the Julia language.
-* [SummaryTables.jl](https://github.com/PumasAI/SummaryTables.jl) - creating publication-ready tables in HTML, docx, LaTeX and Typst formats.
+Let's get started
 
-Let's start with example data for brisbane speed camera locations:
+```{julia}
+using DataFrames
+```
+
+## Constructing DataFrames
+
+### From Column-Value Pairs
+
+The most common way to create a DataFrame is by providing column names (as symbols) and their corresponding vectors of data.
+
+```{julia}
+# Create a DataFrame with two columns 'a' and 'b'
+df = DataFrame(a = [1, 2, 3], b = [2.0, 4.0, 6.0])
+```
+
+Notice that Julia infers the data types for each column. Here, `a` is `Int64` and `b` is `Float64`.
+
+We can also create DataFrames using `Pairs`:
+
+```{julia}
+DataFrame(:c => ["apple", "banana", "cherry"], :d => [true, false, true])
+```
+
+### From Dictionaries
+
+You can also construct a DataFrame from a dictionary where keys are column names (symbols or strings) and values are vectors.
+
+```{julia}
+DataFrame(Dict(
+    :name => ["Aapeli", "Yoni", "Jesse"],
+    :age => [25, 30, 35],
+    :city => ["New York", "Brisbane", "Berlin"]
+))
+```
+
+### From `NamedTuple`s
+
+Creating a DataFrame from a vector of `NamedTuple`s is very flexible.
+
+```{julia}
+DataFrame([
+    (id = 1, value = 10.5, tag = "A"),
+    (id = 2, value = 20.1, tag = "B"),
+    (id = 3, value = 15.0, tag = "C")
+])
+```
+
+If the `NamedTuple`s have different fields or different orders, we can use `Tables.dictcolumntable` to fill missing values with `missing`.
+
+```{julia}
+DataFrame(Tables.dictcolumntable([
+    (id = 1, name = "Julia"),
+    (id = 2, score = 95.5),
+    (id = 3, name = "DataFrame", type = "Table")
+]))
+```
+
+Notice the `?` after the types, indicating that these columns now allow `missing` values.
+
+## Column Names and Basic Information
+
+In DataFrames.jl, columns are primarily accessed using `Symbol`s.
+
+```{julia}
+df = DataFrame(a = [1, 2, 3], b = [2.0, 4.0, 6.0], c = ["x", "y", "z"])
+
+df[:, :a]
+```
+
+You can get the column names:
+
+```{julia}
+names(df)
+```
+
+And column types:
+
+```{julia}
+eltype.(eachcol(df))
+```
+
+### Size and Dimensions
+
+To get the dimensions of a DataFrame, similar to matrices:
+
+```{julia}
+size(df) # (rows, columns)
+```
+
+You can also specify the dimension:
+
+```{julia}
+@show size(df, 1) # Number of rows
+@show size(df, 2) # Number of columns
+```
+
+### Column-based Storage and Iterators
+
+DataFrames.jl stores data in a column-oriented fashion. This means each column is essentially a `Vector`.
+
+You can retrieve a column using dot syntax or indexing:
+
+```{julia}
+df.a # Access column 'a' using dot syntax
+df[!, :b] # Access column 'b' using ! (returns a view, i.e., no copy)
+df[:, :c] # Access column 'c' using :, which makes a copy
+```
+
+The difference between `.` and `!` versus `:` for column retrieval is crucial for performance and understanding data manipulation.
+
+```{julia}
+df.a === df[!, :a] # They refer to the same underlying data
+```
+
+```{julia}
+df.a === df[:, :a] # The : operator creates a copy, so they are not the same object
+```
+
+When you need to iterate through rows, you can use `eachrow(df)`:
+
+```{julia}
+for row in eachrow(df)
+    println("Row: $(row.a), $(row.b), $(row.c)")
+end
+```
+
+Each `row` here is a `DataFrameRow` object, which behaves like a `NamedTuple` for row-wise access.
+
+## Indexing and Slicing
+
+DataFrames can be indexed similar to matrices, but with the added flexibility of column names.
+
+### Positional Indexing
+
+```{julia}
+df[1, 1] # First row, first column
+df[2, :b] # Second row, column 'b'
+df[1, :] # First row (returns a DataFrameRow)
+df[:, 1] # First column (returns a Vector, view)
+```
+
+### Column Selection
+
+You can select multiple columns by passing a vector of column names (symbols or strings):
+
+```{julia}
+df[:, [:a, :c]] # Select columns 'a' and 'c' (creates a new DataFrame)
+```
+
+Or exclude columns using `Not`:
+
+```{julia}
+df[:, Not(:b)] # Select all columns except 'b'
+```
+
+You can combine `Not` with a vector of columns:
+
+```{julia}
+df[:, Not([:a])] # Select all columns except 'a'
+```
+
+### Views vs. Copies
+
+Recall the distinction between `!` and `:` for column access. This also applies to row and full DataFrame indexing.
+
+- `df[!, :colname]` returns a *view* of the column (no copy).
+- `df[:, :colname]` returns a *copy* of the column.
+- `df[!, [col1, col2]]` returns a *view* of the selected columns (a `SubDataFrame`).
+- `df[:, [col1, col2]]` returns a *copy* of the selected columns (a new `DataFrame`).
+- `df[!, row_indices, col_indices]` returns a `SubDataFrame` (view).
+- `df[row_indices, col_indices]` returns a new `DataFrame` (copy).
+
+Using views (`!`) is more memory-efficient when you don't need a separate copy of the data and want changes to the view to reflect in the original DataFrame. However, views require translating between the parent df indeces and the view indeces, which might in theory cause performance issues in edge cases.
+
+## Getting, Setting, and Mutating Data
+
+You can retrieve, set, and modify individual cells, rows, or columns.
+
+### Setting Individual Values
+
+```{julia}
+df[1, :a] = 100 # Set value at row 1, column 'a'
+```
+
+### Setting Entire Columns
+
+```{julia}
+df.b = [10.0, 20.0, 30.0] # Replace column 'b'
+```
+
+If the new column has a different type, it will be converted if possible, or an error will occur. If a column doesn't exist, it will be added.
+
+```{julia}
+df.d = ["alpha", "beta", "gamma"] # Add a new column 'd'
+```
+
+### Broadcasting Assignment
+
+Broadcasting (`.=`) is extremely powerful for performing element-wise operations and assignments efficiently.
+
+```{julia}
+df.a .= 0 # Set all values in column 'a' to 0
+```
+
+You can also use it with a scalar or a vector of compatible size:
+
+```{julia}
+df.b .= df.b * 2 # Double all values in column 'b'
+```
+
+Or apply a function:
+
+```{julia}
+df.c .= uppercase.(df.c) # Convert all strings in column 'c' to uppercase
+```
+
+Broadcasting assignment works with sub-selections as well:
+
+```{julia}
+df[1:2, :a] .= 99 # Set the first two values of column 'a' to 99
+```
+
+# Story: Working with real data
+
+We'll now look at a more in-depth, hands-on exercise of using DataFrames.
+
+The Queensland government has an open data portal, and makes available [tide predictions at various locations](https://www.data.qld.gov.au/dataset/coastal-data-system-tide-data/resource/1311fc19-1e60-444f-b5cf-24687f1c15a7) on the state's coast. (There's some other interesting data as well at <https://www.qld.gov.au/tides>).
+
+Let's use this to do some exploration. We'll first download with the HTTP.jl package and write it to `tides.csv`
 
 ```{julia}
 using HTTP
+
+response = HTTP.get("https://www.data.qld.gov.au/datastore/dump/1311fc19-1e60-444f-b5cf-24687f1c15a7?bom=True")
+write("work/tides.csv", response.body)
+```
+
+Let's explore the first few lines
+
+```{julia}
+open("work/tides.csv") do io
+    for i ∈ 1:5
+        line = readline(io)
+        println(line)
+    end
+end
+```
+
+We can read it into a dataframe with `CSV.read`, and show the first few lines with `first`
+
+```{julia}
 using CSV
-using DataFrames
 
-response = HTTP.get("https://www.data.qld.gov.au/datastore/dump/f6b5c37e-de9d-4041-8c18-f4d4b6c593a8?bom=True")
-
-df = CSV.read(IOBuffer(response.body), DataFrame)
-
+df = CSV.read("work/tides.csv", DataFrame)
 first(df, 5)
 ```
 
-```{julia}
-using SummaryTables
+Note the inferred datatypes, including the automatically converted `DateTime`. We can customize this
 
-simple_table(first(df, 5))
+```{julia}
+# we could also do
+df32 = CSV.read("work/tides.csv", DataFrame; types=Dict("Water Level" => Float32, "Prediction" => Float32, "Residual" => Float32, "Latitude" => Float32, "Longitude" => Float32));
 ```
 
 ```{julia}
-# simple_table(df)
+println("With Float32s, we saved $(round((1-Base.summarysize(df32)/Base.summarysize(df))*100; digits=2))% memory")
 ```
 
-<!-- speed cameras by suburb vs 
+(This is silly, don't do it in practice.)
 
-missing data:... -->
+Let's look also at the last rows
+
+```{julia}
+last(df, 3)
+```
+
+Here it seems that "-99.0" seems to mean missing. Let's see where it's coming from in the CSV
+
+```{julia}
+open("work/tides.csv") do io
+    while true
+        line = readline(io)
+        if contains(line, "-99")
+            println(line)
+            break
+        end
+    end
+end
+```
+
+We can tell `CSV.read` to mark values with "-99.000" as `missing`
+
+```{julia}
+df = CSV.read("work/tides.csv", DataFrame; missingstring=["-99.000"])
+last(df, 3)
+```
+
+Note the "?" in water level/residual: this is DataFrames notation for columns which contain missing data.
+
+Referring to `Water Level` is a bit annoying now:
+
+```{julia}
+df[:, Symbol("Water Level")]
+```
+
+Let's rename it, and let's rename `DateTime` too to avoid confusion:
+
+```{julia}
+# ! means in-place
+rename!(df, Symbol("Water Level") => :WaterLevel, Symbol("DateTime") => :Time)
+first(df, 5)
+```
+
+Drop some redundant columns
+
+```{julia}
+select!(df, [:Site, :Latitude, :Longitude, :Time, :WaterLevel, :Prediction, :Residual])
+first(df, 5)
+```
+
+We can get the list of columns:
+
+```{julia}
+names(df)
+```
+
+Or by piping
+
+```{julia}
+df |> names
+```
+
+## Getting to know our data
+
+Let's dive a bit deeper, what do we have?
+
+```{julia}
+describe(df)
+```
+
+How many data points do we have per site?
+
+```{julia}
+combine(groupby(df, :Site), nrow => :Count)
+```
+
+
+
 
 # Dataframes - Transformations
 
@@ -340,6 +818,19 @@ As there are already great resources for this on the web let us go through these
 
 1. [A PumasAI tutorial](https://tutorials.pumas.ai/html/DataWranglingInJulia/05-mutating-dfmeta.html)
 1. [A UQ course tutorial](https://courses.smp.uq.edu.au/MATH2504/2025/lectures_html/lecture-unit-8.html)
+
+## More dataframes
+
+Here are the common packages in this ecosystem:
+
+* [DataFrames.jl](https://github.com/JuliaData/DataFrames.jl) - the main dataframes package.
+* [DataFramesMeta.jl](https://github.com/JuliaData/DataFramesMeta.jl) - metaprogramming tools for DataFrames.jl objects.
+* [CSV.jl](https://github.com/JuliaData/CSV.jl) - read and write to CSV files.
+* [CategoricalArrays.jl](https://github.com/JuliaData/CategoricalArrays.jl) - provides tools for working with categorical variables, both with unordered (nominal variables) and ordered categories (ordinal variables), optionally with missing values.
+* [Chain.jl](https://github.com/jkrumbiegel/Chain.jl) - provides a useful macro rewrites a series of expressions into a chain.
+* [XLSX.jl](https://github.com/felipenoris/XLSX.jl) - Excel file reader/writer for the Julia language.
+* [SummaryTables.jl](https://github.com/PumasAI/SummaryTables.jl) - creating publication-ready tables in HTML, docx, LaTeX and Typst formats.
+
 
 # JSON
 
