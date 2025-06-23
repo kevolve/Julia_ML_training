@@ -1,6 +1,7 @@
 ---
 title: "Unit 4 - Parallel and Fast"
 engine: julia
+jupyter: julia-1.11
 julia:
     exeflags: ["--project=@.", "--threads=8"]
     author:
@@ -909,6 +910,8 @@ heatmap!(axζ, ζ, colormap=:balance)
 heatmap!(axc, model.tracers.c)
 current_figure()
 ```
+
+We'll then go through [one of thier examples](https://clima.github.io/OceananigansDocumentation/stable/literated/langmuir_turbulence/).
 
 # Additional online resources
 
