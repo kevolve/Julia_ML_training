@@ -790,7 +790,7 @@ using Distributed
 
 # Start with a few processes if not already done
 if nprocs() == 1
-    addprocs(3) # Adds 3 workers, total 4 processes
+    # addprocs(3) # Adds 3 workers, total 4 processes
 end
 
 # the beauty of Distributed.jl is that you can run this on multiple machines on a cluster,
@@ -836,7 +836,7 @@ f1 = @spawnat 2 remote_task(3)
 end
 
 total_samples = 10^8
-num_workers = nprocs() - 1 # Exclude the master process from the work distribution
+num_workers = nprocs()
 samples_per_worker = ceil(Int, total_samples / num_workers)
 
 println("Starting distributed estimation of pi with $(num_workers) workers...")
@@ -872,6 +872,43 @@ rmprocs(workers())
 * [ClusterManagers.jl](https://github.com/JuliaParallel/ClusterManagers.jl) for various HPC cluster managers for Distributed.jl
 * [a great blog post](https://juntian.me/programming/A_Deep_Dive_into_Distributed.jl/) by Jun Tian for more in-depth.
 
+# Example - Oceananigans
+
+Let's explore the [Oceananigans.jl](https://github.com/CliMA/Oceananigans.jl) package and try to run it both on GPU and on CPU.
+
+Let's start with a very basic example from their [quick start guide](https://clima.github.io/OceananigansDocumentation/stable/quick_start/):
+
+```{julia}
+using Oceananigans
+using CairoMakie
+
+grid = RectilinearGrid(GPU(),
+                       size = (1024, 1024),
+                       x = (-π, π),
+                       y = (-π, π),
+                       topology = (Periodic, Periodic, Flat))
+
+model = NonhydrostaticModel(; grid, advection=WENO(), tracers=:c)
+
+δ = 0.5
+cᵢ(x, y) = exp(-(x^2 + y^2) / 2δ^2)
+ϵ(x, y) = 2rand() - 1
+set!(model, u=ϵ, v=ϵ, c=cᵢ)
+
+simulation = Simulation(model; Δt=1e-3, stop_time=10)
+conjure_time_step_wizard!(simulation, cfl=0.2, IterationInterval(10))
+run!(simulation)
+
+u, v, w = model.velocities
+ζ = Field(∂x(v) - ∂y(u))
+
+fig = Figure(size=(1200, 600))
+axζ = Axis(fig[1, 1], aspect=1, title="vorticity")
+axc = Axis(fig[1, 2], aspect=1, title="tracer")
+heatmap!(axζ, ζ, colormap=:balance)
+heatmap!(axc, model.tracers.c)
+current_figure()
+```
 
 # Additional online resources
 
