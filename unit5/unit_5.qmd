@@ -182,68 +182,78 @@ This notebook uses a **linear model** (!) to create a predictor of MNIST digits.
 
 ## Flux example
 
-```{julia}
-using Flux, Flux.Data.MNIST, Statistics, Random, Plots
-using Flux: onehotbatch, onecold, crossentropy
-Random.seed!(0)
-
-epochs = 200
-eta = 1e-5
-batchSize = 10
-trainRange, validateRange = 1:1000, 1001:1500cour
-
-function minibatch(x, y, indexRange)
-    xBatch = Array{Float32}(undef, size(x[1])..., 1, length(indexRange))
-    for i in 1:length(indexRange)
-        xBatch[:, :, :, i] = Float32.(x[indexRange[i]])
-    end
-    return (xBatch, onehotbatch(y[indexRange], 0:9))
-end
-
-trainLabels = MNIST.labels()[trainRange]
-trainImgs = MNIST.images()[trainRange]
-mbIdxs = Iterators.partition(1:length(trainImgs), batchSize)
-trainSet = [minibatch(trainImgs, trainLabels, bi) for bi in mbIdxs]
-
-validateLabels = MNIST.labels()[validateRange]
-validateImgs = MNIST.images()[validateRange]
-validateSet = minibatch(validateImgs, validateLabels, 1:length(validateImgs))
-
-model = Chain(  flatten, Dense(784,400,relu),
-                Dense(400, 200, relu),
-                Dense(200, 100, relu), 
-                Dense(100, 50, relu), 
-                Dense(50, 10), softmax)
-
-opt = ADAM(eta)
-loss_path = []
-valid_error_path = []
-error_perf(x, y, model) = 1 - mean(onecold(model(x)) .== onecold(y))
-loss(x, y, model) = crossentropy(model(x), y)
-
-model(trainSet[1][1])
-for _ in 1:epochs
-    Flux.train!((x,y)->loss(x,y,model), params(model), trainSet, opt)
-    push!(valid_error_path, error_perf(validateSet..., model))
-    push!(loss_path, mean([loss(s...,model) for s in trainSet]))
-    print(".")
-end
-```
-
-```{julia}
-best_err, best_epoch = findmin(valid_error_path)
-p1 = plot(valid_error_path,label = false,
-        ylim=(0.0,0.3), ylabel = "Validation Error Rate",lw=3)
-plot!([best_epoch,best_epoch],[0,best_err],c=:black,label=false,lw=4)
-annotate!(best_epoch+65, best_err-0.05, text("Early Stopping: epoch=$best_epoch", :black, :right, 8))
-p2 = plot(loss_path,label = false,
-        ylim=(0.0,2), xlabel="Epoch", ylabel = "Training Loss",lw=3)
-plot(p1,p2,layout=(2,1))
-```
+This notebook uses `Flux.jl` and a simple dense neural network for MNIST: [Flux_MNIST.ipynb](https://github.com/open-AIMS/Julia_ML_training/blob/main/unit5/Flux_MNIST.ipynb).
 
 ## Lux Example
 
+This notebook uses `Lux.jl` and a simple dense neural network for MNIST: [Lux_MNIST.ipynb](https://github.com/open-AIMS/Julia_ML_training/blob/main/unit5/Lux_MNIST.ipynb).
+
 ## DiffEqFlux Example
+
+This example is taken from [here](https://docs.sciml.ai/DiffEqFlux/stable/examples/neural_ode/):
+
+```{julia}
+using ComponentArrays, Lux, DiffEqFlux, OrdinaryDiffEq, Optimization, OptimizationOptimJL,
+      OptimizationOptimisers, Random, CairoMakie
+
+rng = Xoshiro(0)
+u0 = Float32[2.0; 0.0]
+datasize = 30
+tspan = (0.0f0, 1.5f0)
+tsteps = range(tspan[1], tspan[2]; length = datasize)
+
+function trueODEfunc(du, u, p, t)
+    true_A = [-0.1 2.0; -2.0 -0.1]
+    du .= ((u .^ 3)'true_A)'
+end
+
+prob_trueode = ODEProblem(trueODEfunc, u0, tspan)
+ode_data = Array(solve(prob_trueode, Tsit5(); saveat = tsteps))
+
+dudt2 = Chain(x -> x .^ 3, Dense(2, 50, tanh), Dense(50, 2))
+p, st = Lux.setup(rng, dudt2)
+prob_neuralode = NeuralODE(dudt2, tspan, Tsit5(); saveat = tsteps)
+
+function predict_neuralode(p)
+    Array(prob_neuralode(u0, p, st)[1])
+end
+
+function loss_neuralode(p)
+    pred = predict_neuralode(p)
+    loss = sum(abs2, ode_data .- pred)
+    return loss
+end
+
+function callback(state, l; doplot = false)
+    print(l, ", ")
+    if doplot
+        pred = predict_neuralode(state.u)
+        fig = Figure()
+        ax = Axis(fig[1, 1], xlabel = "Time", ylabel = "Value")
+        scatter!(ax, tsteps, ode_data[1, :]; label = "data")
+        scatter!(ax, tsteps, pred[1, :]; label = "prediction")
+        axislegend(ax)
+        display(fig)
+    end
+    return false
+end
+
+pinit = ComponentArray(p)
+callback((; u = pinit), loss_neuralode(pinit); doplot = true)
+
+adtype = Optimization.AutoZygote()
+optf = Optimization.OptimizationFunction((x, p) -> loss_neuralode(x), adtype)
+optprob = Optimization.OptimizationProblem(optf, pinit)
+
+result_neuralode = Optimization.solve(
+    optprob, OptimizationOptimisers.Adam(0.05); callback = callback, maxiters = 300)
+
+optprob2 = remake(optprob; u0 = result_neuralode.u)
+result_neuralode2 = Optimization.solve(
+    optprob2, Optim.BFGS(; initial_stepnorm = 0.01); callback, allow_f_increases = false)
+
+callback((; u = result_neuralode2.u), loss_neuralode(result_neuralode2.u); doplot = true)
+```
 
 # General Machine Learning
 
@@ -424,56 +434,6 @@ model = fit(MixedModel,
 )
 
 println(model)
-```
-
-## Multivariate Stats
-
-```{julia}
-# using MultivariateStats,LinearAlgebra,Flux.Data.MNIST
-
-# imgs, labels   = MNIST.images(), MNIST.labels()
-# x = hcat([vcat(float.(im)...) for im in imgs]...)
-# pca = fit(PCA, x; maxoutdim=2)
-# M = projection(pca)
-
-# function compareDigits(dA,dB)
-#     imA, imB = imgs[labels .== dA], imgs[labels .== dB]
-#     xA = hcat([vcat(float.(im)...) for im in imA]...)
-#     xB = hcat([vcat(float.(im)...) for im in imB]...)
-#     zA, zB = M'*xA, M'*xB
-#     default(ms=0.8, msw=0, xlims=(-5,12.5), ylims=(-7.5,7.5),
-#             legend = :topright, xlabel="PC 1", ylabel="PC 2")
-#     scatter(zA[1,:],zA[2,:], c=:red,  label="Digit $(dA)")
-#     scatter!(zB[1,:],zB[2,:], c=:blue, label="Digit $(dB)")
-# end
-
-# plots = []
-# for k in 1:5
-#     push!(plots,compareDigits(2k-2,2k-1))
-# end
-# plot(plots...,size = (800, 500), margin = 5mm)
-```
-
-## Time Series
-
-```{julia}
-using TimeSeries
-using DataFrames
-using AlgebraOfGraphics
-using CairoMakie # or GLMakie
-
-# Make a TimeArray of random data
-dates = Date(2024, 6, 1):Day(1):Date(2024, 6, 10)
-values = randn(length(dates))
-ta = TimeArray(dates, values, ["Value"])
-
-# Convert TimeArray to DataFrame for AlgebraOfGraphics
-df = DataFrame(timestamp = time(ta), value = ta.Value)
-
-# Build the plot
-plt = data(df) * mapping(:timestamp, :value) * visual(Lines)
-
-draw(plt; axis=(; xlabel="Date", ylabel="Value", title="Time Series"))
 ```
 
 # Selected topics from Optimization
