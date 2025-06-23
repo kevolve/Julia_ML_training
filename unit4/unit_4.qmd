@@ -1,7 +1,6 @@
 ---
 title: "Unit 4 - Parallel and Fast"
 engine: julia
-jupyter: julia-1.11
 julia:
     exeflags: ["--project=@.", "--threads=8"]
     author:
@@ -819,8 +818,8 @@ end
 Then spawn tasks on workers with `@spawnat`
 
 ```{julia}
-# Spawn a task on worker 2
-f1 = @spawnat 2 remote_task(3)
+# Spawn a task on worker 1
+f1 = @spawnat 1 remote_task(3)
 ```
 
 ```{julia}
