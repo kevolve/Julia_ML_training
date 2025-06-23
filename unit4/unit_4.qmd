@@ -8,35 +8,67 @@ julia:
         - "Yoni Nazarathy"
 ---
 
-# Why parallel?
+# Introduction & Motivation
+
+## Why parallel?
 
 For decades, computers got faster mainly because chipmakers squeezed more transistors onto chips and raised their clock speeds—this was Moore’s law. But after the early 2000s, increasing clock speeds hit limits due to heat and power dissipation limits. In order to get more power into machines, CPU manufacturers instead started putting multiple cores on CPUs: identical and somewhat isolated execution units that can do work independently. In essence, it became harder to make CPUs faster so they just put many on one die.
 
 GPUs, which were designed for graphics, also became much more powerful and began to be used for general-purpose computing.
 
-Now, to speed up programs, we have to use parallel computing across multicore CPUs, GPUs, and even multiple machines working together—this is called distributed computing. See for example the article @sutter2005free.
+Now, to speed up programs beyond what a single core can do, we have to use parallel computing across multiple cores, CPUs, GPUs, or even multiple machines working together—this is called distributed computing. See for example the article @sutter2005free.
 
 This brings a whole new set of challenges to writing programs: now we can't just write code that runs linearly in the obvious order, instead we have to come up with algorithms that can be run in parallel and speed up execution by performing different parts on different logical computation units. This brings with it a whole new hoarde of bugs, but also incredible time savings and performance throughput improvements, including even the ability to do computation that would not be possible without them (e.g. training LLMs would never be possible on single-threaded CPUs).
 
-# Overview
+## Overview
 
 Julia is well suited for distributed computing, parallel computing, and GPU use. See the overview of [parallel computing](https://docs.julialang.org/en/v1/manual/parallel-computing/) in the Julia documentation. In this unit we deal with several layers of parallelism for speedup:
 
-1. **Multi-threading** - Use multiple CPU threads to run tasks simultaneously within a single process. See the [docs](https://docs.julialang.org/en/v1/manual/multi-threading/).
-1. **Distributed Computing** - Use multiple processes, possibly on different machines, to work together on larger problems. See the [docs](https://docs.julialang.org/en/v1/manual/distributed-computing/) as well as [Distributed.jl](https://github.com/JuliaLang/Distributed.jl) and [Malt.jl](https://github.com/JuliaPluto/Malt.jl).
-1. **GPUs** - Harness the massive parallelism of graphics processors for compute-heavy tasks. See [JuliaGPU.org](https://juliagpu.org/).
+1. **Multi-threading**: Use multiple CPU threads to run tasks simultaneously within a single process. See the [docs](https://docs.julialang.org/en/v1/manual/multi-threading/).
+1. **Distributed Computing**: Use multiple processes, possibly on different machines, to work together on larger problems. See the [docs](https://docs.julialang.org/en/v1/manual/distributed-computing/) as well as [Distributed.jl](https://github.com/JuliaLang/Distributed.jl) and [Malt.jl](https://github.com/JuliaPluto/Malt.jl).
+1. **GPUs**: Harness the massive parallelism of graphics processors for compute-heavy tasks. See [JuliaGPU.org](https://juliagpu.org/).
 
 Combinations of 1, 2, and 3 are obviously possible.
 
 Note that a related item, also in the Julia documentation is "Asynchronous 'tasks', or coroutines". See the [Asynchronous Programming docs](https://docs.julialang.org/en/v1/manual/asynchronous-programming/).
 
-We now focus on multi-threading, distributed computing, and GPUs. We then attempt to run and example with [Oceananigans.jl](https://github.com/CliMA/Oceananigans.jl) from the [CliMA organization](https://juliapackages.com/u/clima) for ocean simulation. See the recent preprint @wagner2025high.
+We now focus on multi-threading, distributed computing, and GPUs. We then run an example with [Oceananigans.jl](https://github.com/CliMA/Oceananigans.jl) from the [CliMA organization](https://juliapackages.com/u/clima) for ocean simulation. See the recent preprint @wagner2025high.
+
+## How do we identify code for parallelisation?
+
+Knowing *when* and *where* to apply parallelisation is as crucial as knowing *how*. Not all code benefits from parallelisation, and overheads can even slow things down.
+
+* **Look for Independence:**
+    * **"Embarrassingly Parallel" Tasks:** If parts of your computation can run completely independently without needing results from other parts (e.g., each iteration of a `for` loop is self-contained), it's ideal for parallelization.
+    * **Data Parallelism:** Applying the same operation to different chunks of data.
+* **Consider Data Access:** access patterns are key to deciding which code does and does not benefit from parallelisation. Here are some things to think about:
+    * **Shared Memory:** Computations that share large data structures (e.g. pre-baked grids of computation) are great for threading-based parallelism where you can easily share memory. Note that this requires careful synchronization to avoid errors.
+    * **Distinct Memory:** When computing with independent data, one can often leverage parallelisation such as GPUs. Distributed computing can be useful for problems too large to fit on one machine, where data is segmented across processes. Note that heavy data transfer can *negate* gains.
+* **Profile code:** to find your code's **hotspots** – the functions or lines that consume the most time. *Don't optimize until you know what's slow!* Sometimes the slow parts are obvious, sometimes not so obvious.
+* **"Amdahl's Law":** Speedup is limited by the *serial* portion of code. If only a small part of code can be parallelized, even with infinite cores, total speedup is limited. Focus on parallelizing the largest possible fraction.
+
+
+## Relevant Julia communities
+
+These are great resources for Julia's parallel computing ecosystem:
+
+*   [**JuliaParallel Organization**](https://github.com/JuliaParallel): Hosts parallel packages like `Distributed.jl`, `MPI.jl`.
+*   [**JuliaGPU.org**](https://juliagpu.org/): The hub for Julia's GPU computing, deceloping `CUDA.jl`, `AMDGPU.jl`, etc.
+
+## Things we won't cover
+
+We will not delve into MPI (Message Passing Interface), but it is implemented in Julia through [MPI.jl](https://juliaparallel.org/MPI.jl/stable/). This is oftentimes used in certain computations on HPC clusters, you might want to check it out. In Julia, this functionality is largely provided by `Distributed.jl`.
+
+Because the focus is on numerical computing relevant to AIMS, we won't be discussing `@async` and non-heterogeneous multithreading in detail; we will not talk about in depth about locking and synchronization.
+
+We won't be delving into low-level CPU optimizaitons like explicit SIMD vectorization or `LoopVectorization.jl`. Note that Julia (like other LLVM-based languages) is able to utilize SIMD in a number of cases automatically.
+
 
 # Multi-threading
 
 This quarto notebook was generated with the command line flag `-t 8` (or `--threads 8`). It means there are 8 threads available. Without this flag, Julia starts up with only 1 thread. If you try in the command line `julia --help` you'll see:
 
-```
+``` 
  -t, --threads {auto|N[,auto|M]}
                            Enable N[+M] threads; N threads are assigned to the `default`
                            threadpool, and if M is specified, M threads are assigned to the
@@ -48,6 +80,8 @@ This quarto notebook was generated with the command line flag `-t 8` (or `--thre
                            threads if not supported (MacOS) or if process affinity is not
                            configured, and sets M to 1.
 ```
+
+The `interactive` threadpool has higher priority and is meant for interactive tasks: such as updating the UI or doing something user facing; whereas `default` is meant for things like background jobs.
 
 Let's use the `nthreads` function inside Julia to see how many threads there are:
 
@@ -242,7 +276,64 @@ Run it a second time to get a clean time
 
 On my machine, this takes about 0.046682 seconds, about 3.3x as fast as the original one.
 
-# More multithreading
+### More on `Threads.@threads`
+
+The `Threads.@threads` macro allows you to specify different *schedulers* for how to execute loop iterations on different threads. The default scheduler, `:dynamic` assumes loop iterations are approximately uniform.
+
+If this is not the case, you are better off using `:greedy` which will greedily pick another iteration when it finishes the last one. This is better for non-uniform iterations.
+
+As an example, consider this loop of artifical and highly non-uniform iteration times where with 10% probability it will sleep for a long time:
+
+```{julia}
+using Random
+using BenchmarkTools
+
+function do_work()
+    if rand() < 0.1
+        sleep(.3)
+    end
+end
+```
+
+With standard scheduler (`:dynamic`, omitted):
+
+```{julia}
+Random.seed!(1974)
+
+@btime begin
+    # same as Threads.@threads :dynamic for _ ∈ 1:200
+    Threads.@threads for _ ∈ 1:200
+        do_work()
+    end
+end
+```
+
+With `:greedy`:
+
+```{julia}
+Random.seed!(1974)
+
+@btime begin
+    Threads.@threads :greedy for _ ∈ 1:200
+        do_work()
+    end
+end
+```
+
+There is also `:static`. See [the docs](https://docs.julialang.org/en/v1/base/multi-threading/#Base.Threads.@threads).
+
+Why not always use `:greedy`? Because of cache coherence and other reasons, `:dynamic` which will do blocks at a time is often faster for uniform iterations.
+
+## The shared memory paradigm
+
+We just saw how easy it is to use Julia's `@threads` macro. This leverages **shared memory parallelism**:
+
+* **One Process, Many Threads:** Multithreading operates within a *single process*. Multiple "threads of execution" run concurrently.
+* **Shared Memory:** Crucially, all threads within that process *share the same memory space*. They can directly read from and write to the same variables and data structures.
+* **The Power:** This direct access means extremely low communication overhead. It's efficient for tasks where threads frequently interact with common data, like processing a large array.
+* **The Peril:** But this power comes with a critical challenge: **data consistency**. If multiple threads try to write to the *same memory location simultaneously*, the result is unpredictable and incorrect. This is called a **race condition**.
+
+Shared memory is powerful, but managing access to shared data is vital. Let's see an example of what can go wrong.
 
 ## What can go wrong?
 
@@ -328,13 +419,41 @@ Parallelism can be hard. You have to be careful with various failure modes like 
 
 ## Task-based parallelism with `Threads.@spawn`
 
-Instead of simply splitting a loop's iterations, Threads.@spawn allows you to launch an individual function call or expression as a separate, lightweight thread (often called a "task" or "goroutine" in other languages). Julia's runtime then intelligently schedules these tasks to run on available threads in your thread pool. 
+Instead of simply splitting a loop's iterations, `Threads.@spawn` allows you to launch an individual function call or expression as a separate, lightweight thread (often called a "task" or "goroutine" in other languages). Julia's runtime then intelligently schedules these tasks to run on available threads in your thread pool.
+
+Note that Julia's threads are not true Operating System threads: they are run on Julia's threadpool and scheduled by Julia. (This is why you need to specify the number of `--threads` on startup.)
 
 When you use `Threads.@spawn`, it immediately returns a `Task` object. This `Task` object is like a promise that the computation will be done eventually. To get the actual result from the `Task`, you use `fetch()`. If you just want to know when the task is complete without needing its return value, you can use `wait()`.
 
-## Example: speeding up boostrap statistics
+```{julia}
+function simulate_work(it)
+    println(time_stamp(),
+            "."^(time_stamp()-before_start), # spacing proportional to elapsed time
+            " Starting iteration $it")
 
-@efron2021computer
+    sleep(1) # sleep for one second as though "processing something"
+
+    println(time_stamp(),
+            "."^(time_stamp()-before_start), # spacing proportional to elapsed time
+             " Finished sleeping (\"processing\") on thread $(Threads.threadid())")
+
+    return it
+end
+
+tasks = Vector{Task}()
+
+before_start = time_stamp()
+for i in 1:17
+    push!(tasks, Threads.@spawn simulate_work(i))
+end
+
+println("Spawned $(length(tasks)) tasks")
+
+results = [fetch(task) for task in tasks]
+println(time_stamp(), "."^(time_stamp()-before_start) * " Task return values: $results")
+```
+
+<!-- @efron2021computer -->
 
 ### `Threads.@spawn` vs. `Threads.@threads`
 
@@ -345,6 +464,7 @@ When you use `Threads.@spawn`, it immediately returns a `Task` object. This `Tas
 | **Return Value**     | No direct return from individual iterations      | Returns a `Task` object, which holds the result   |
 | **Use Case**         | Homogeneous, iterative work                      | Heterogeneous, distinct, or long-running computations |
 
+It makes sense ot use `Threads.@spawn` if your ``computation graph'' is heterogeneous, i.e. you depend on inputs/
 
 # GPUs
 
@@ -365,8 +485,6 @@ Buck in particular showed through Brook (during his PhD) that it's possible to i
 The stats on the number of floating point operations (FLOPs) a GPU could do compared to a CPU made it a very attractive platform for early research. This was directly enabled by the parallelism story on GPUs compared to CPUs -- they were parallel from the beginning. A 2003 article from the magazine *Computer* states "The new GPUs are very fast. Stanford's Ian Buck calculates that the current GeForce FX 5900’s performance peaks at 20 Gigaflops, the equivalent of a 10-GHz Pentium", from @macedonia2003gpu (the whole article is a very interesting read).
 
 The cryptoanalysis and hacker communities also used GPUs for computing rainbow tables and bruteforcing passwords and hash pre-images^[It's not entirely clear how widespread the use of GPUs was for cracking cryptosystems before the introduction of CUDA (after which it exploded). There were certainly examples and it was a budding technique in the community, but I couldn't find concrete and widely used examples to cite.]. This was exacerbated by the [Crypto Wars](https://en.wikipedia.org/wiki/Crypto_Wars): futile efforts by the United States government to limit the availability strong encryption to the general public and in export products (cryptography is still classified as a dual-use technology and its exports are somewhat restricted). The new availability of highly-parallel hardware combined with new ideas around this time made for practically feasible attacks on widely deployed cryptosystems, such as cracking passwords in networked Microsoft operating systems (e.g. LAN Manager), cracking early WiFi encryption (WEP, and later WPA), and breaking commonly used hashes (such as the abysmal MD5). Cryptography (and laws around cryptography) have come a long way since then.
-
-## A crash course to modern NVIDIA architectures
 
 ## CUDA.jl
 
@@ -407,99 +525,353 @@ CPU (single thread) | 155.54      | 1x
 CPU (multithreaded) | 46.68       | 3.3x
 GPU (CUDA)          | 5.71        | 27.2x
 
-## Example - Simple Number Theory Computation
+## A crash course to modern NVIDIA architectures
 
-The [Goldbach Conjecture](https://en.wikipedia.org/wiki/Goldbach%27s_conjecture) is the following conjecture:
+GPUs are largely fast for two reasons:
 
-> Every positive even integer can be written as the sum of two primes.
+1. **Massive Parallelism:** instead of having few cores that implement a very powerful and rich instruction set (e.g. 6-32 on CPUs), GPUs have hundreds or thousands of small ``streaming multiprocessors'' (e.g. an NVIDIA RTX 3090 has 10 496 CUDA cores).
+2. **Massive Memory Bandwidth:** a high end workstation has 50-100 GB/s of memory bandwidth, compared to 1000 GB/s+ on GPUs (old school RTX 3090 has ~900 GB/s, a top of the line H200 has 4800 GB/s).
 
-Originally posed as far back as 1742, it's still a conjecture: it has not been proven to be true. However, people have verified it's true for ridiculously large inputs (e.g. greater than $10^18$).
+GPUs achieve these incredible stats with a completely different architecture to CPUs.
 
-Here is both a slow implementation (using a single core) as well as a fast implementation.
+### Single Instruction, Multiple Thread (SIMT)
 
-```julia
-using BenchmarkTools
-using Plots
+The core of GPU parallelism lies in the **Single Instruction, Multiple Thread (SIMT)** execution model. Unlike CPUs where each core executes independent instructions, a GPU's Streaming Multiprocessor (SM) operates on groups of threads called **warps** (32 threads). All threads within a warp execute the *same instruction* simultaneously, but on *different data*.
 
-function sieve_of_Eratosthenes(n)
-    primebits = ones(Bool,n) # Will contain true if the index is prime (initially all assumed prime)
-    primebits[1] = false # The number 1 is not prime
-    p = 2 # Smallest prime
-    @inbounds while p ≤ n
-        i = 2p
-        while i ≤ n  # \le +[TAB]
-            primebits[i] = false
-            i += p
-        end
-        p += 1
-        while p ≤ n && !primebits[p]
-            p += 1
-        end
-    end
-    return primebits
-end
+A CPU has a very sophisticated superscalar pipeline to execute a rich set of instructions one after the other, to allow for expressing a huge generality of programs and executing them simultaneously. A GPU on the other hand is built to run basically the same code on different data extremely efficiently.
 
-function check_Goldbachs_slow(n)
-    primebits = sieve_of_Eratosthenes(n)
-    primes = (1:n)[primebits]
-    out = zeros(Int, n)
+### Computational model
 
-    for i in 2:2:n
-        for p in primes
-            if in(i - p, primes)
-                out[i] += 1
-            end
-        end
-    end
-    return out[2:2:n]
-end
+The NVIDIA GPU execution model organizes computation in a hierarchy:
 
-function check_Goldbachs(n::Integer)
-    # Below we are working in the subset of the numbers
-    # The primes we care about are odd numbers in the range 3:2:n
-    # The output are even numbers in the range 2:2:n
+1. **Grid:** The entire computation defined by the user. A grid is composed of independent **thread blocks**.
+2. **Thread Block (Block):** A group of threads that can cooperate via shared memory and synchronization. All threads in a block execute on the same Streaming Multiprocessor (SM, see below). Max 1024 threads/block.
+3. **Warp:** The fundamental unit of execution on an SM. A warp consists of **32 threads** that execute the same instruction in lock-step (i.e. SIMT). If threads in a warp diverge (e.g., `if-else` statements), execution paths are serialized (run one after the other, e.g. first `if`, then `else`), impacting performance.
+4. **Streaming Multiprocessor (SM):** The core processing unit of the GPU. An SM contains:
+  * **CUDA Cores:** For general-purpose scalar/vector operations (FP32, INT32, etc.).
+  * **Tensor Cores:** Specialized units for matrix operations, particularly for ML.
+  * **Load/Store Units (LSUs):** For memory access.
+  * **Special Function Units (SFUs):** For transcendental functions.
+  * **Shared Memory/L1 Cache:** Fast, on-chip memory accessible by threads within the same block.
+  * **Warp Schedulers:** Manage and dispatch warps to available execution units. An SM can concurrently execute multiple active warps (up to its resource limits).
+5. **CUDA Cores / Tensor Cores / LSUs / SFUs:** These are the actual execution units *within* an SM that perform the computations dictated by the warp's instructions.
 
-    n_half = n >> 0x01
-    primebits = sieve_of_Eratosthenes(n)
-    @inbounds mask = primebits[3:2:n]
-    @inbounds primes = (Int32(1):Int32(n_half - 1))[mask] # not really the primes!
+**Hierarchy Flow:**
 
-    out = zeros(UInt16, n_half)
-    out[2] = 0x0001 # 4 is 2 + 2, and below we only deal with odd primes
-    @inbounds for x in primes
-        i_out = x + 2
-        for i_mask in 1:(n_half - x)
-            out[i_out] += mask[i_mask]
-            i_out += 1
-        end
-    end
-    return out
-end
+1. A **Grid** is launched onto the GPU.
+1. The GPU schedules **Thread Blocks** onto available **SMs**. An SM can host multiple blocks concurrently, limited by its resources (registers, shared memory).
+1. Each **Thread Block** is further divided into **Warps** (32 threads).
+1. **SMs** fetch and dispatch instructions from active **Warps** to their respective **CUDA Cores, Tensor Cores, LSUs, and SFUs** for execution.
 
-# Test the implementation
-@assert check_Goldbachs_slow(100) == check_Goldbachs(100)
+This hierarchy allows for massive parallelism by distributing work across many SMs, and within each SM, by executing multiple warps concurrently and leveraging specialized hardware units.
 
-n = 10_000 # 1_000_000
-checks = @btime check_Goldbachs(n)
 
-scatter(2:2:n, checks, legend=false, xlabel="n", ylabel="Number of Goldbach pairs", markersize=0.1)
+### Quick reminder on CPU architecture and memory bandwidth
+
+Here is what a CPU cache hierarchy looks like:
+
+![Multicore CPU cache hierarchy, from [insidetheiot.com](https://www.insidetheiot.com/cache-in-multicore-systems/)](multicore-cache.png)
+
+Consider my main desktop from around 2020, consisting of an AMD Ryzen 5800X, and 64 GB of DDR4 RAM at 3200 MT/s. Here are the specs:
+
+* **Cores/SMT threads:** 8/16
+* **L1 cache:** 64 KB per core (32 KB inst/32 KB data)
+* **L2 cache:** 512 KB per core
+* **L3 cache:** 32 MB total
+* **CPU cache line:** 64 bytes
+* **RAM:** dual-channel DDR4
+* **Memory data path width:** 64 bits per channel
+* **Memory speed:** 3200 MT/s
+
+Modern CPUs read memory one cache line at a time: that is, 64 bytes, or 512 bits. When my CPU fetches some data, it first looks in L1 cache, then L2 cache, then L3 cache. If it doesn't find it in any of them, it issues a DDR burst to grab a cache line worth of data.
+
+When the CPU issues a DDR read command, the memory module will transfer 64 bits (that's the memory data path per channel) of data at a time from RAM to the CPU. The CPU generally reads one cache line at a time so 64 bytes, which is 8x64 bit reads.
+
+With two DDR4 modules (sticks of RAM), in dual-channel mode, we can read twice the bytes. 3200 MT/s means 3200 million transfers per second. This gives $3200*2*64/8$ million bytes per second, or roughly 50 GB/s of sequential read from RAM. **This is the theoretical maximum rate at which we can process large datasets on my PC.**
+
+**This is just the max bandwidth.** Random reads will be much slower, a good rule of thumb is a tenth of it. This also does not consider latency. See this:
+
+```
+From <https://gist.github.com/jboner/2841832>
+
+Latency Comparison Numbers
+----------------------------------
+L1 cache reference                           0.5 ns
+Branch mispredict                            5   ns
+L2 cache reference                           7   ns                      14x L1 cache
+Mutex lock/unlock                           25   ns
+Main memory reference                      100   ns                      20x L2 cache, 200x L1 cache
+Compress 1K bytes with Zippy             3,000   ns        3 us
+Send 1K bytes over 1 Gbps network       10,000   ns       10 us
+Read 4K randomly from SSD*             150,000   ns      150 us          ~1GB/sec SSD
+Read 1 MB sequentially from memory     250,000   ns      250 us
+Round trip within same datacenter      500,000   ns      500 us
+Read 1 MB sequentially from SSD*     1,000,000   ns    1,000 us    1 ms  ~1GB/sec SSD, 4X memory
+Disk seek                           10,000,000   ns   10,000 us   10 ms  20x datacenter roundtrip
+Read 1 MB sequentially from disk    20,000,000   ns   20,000 us   20 ms  80x memory, 20X SSD
+Send packet CA->Netherlands->CA    150,000,000   ns  150,000 us  150 ms
 ```
 
+### GPU memory architecture
 
+While our CPU's memory bandwidth of approximately 50 GB/s for sequential reads is impressive for a general-purpose processor, this is peanuts compared to GPUs. Let's consider the NVIDIA RTX 3090, a late 2020 high-end consumer GPU:
+
+* **Memory:** 24 GB GDDR6X
+* **Memory Interface Width:** 384-bit
+* **Memory Speed (Effective):** 19.5 Gbps (Gigabits per second)
+
+This gives a theoretical maximum memory bandwidth of 384/8 bytes at 19.5 Gbps = 936 GB/s. **That's 18.7x the CPU**.
+
+### Kernel Functions: The Building Blocks of GPU Computation
+
+A "kernel" is a function that runs on the GPU. When you launch a kernel, thousands of threads are created, and each thread executes the kernel function on its own piece of data.
+
+```{julia}
+# First, ensure CUDA is functional and you have a device
+if !CUDA.functional()
+    error("CUDA is not functional! Do you have an NVIDIA GPU and proper drivers?")
+end
+CUDA.device!(0) # Select GPU 0 (if you have multiple)
+```
+
+To write your own kernel, you define a regular Julia function, but it needs to be compatible with GPU execution. You then launch it using the `@cuda` macro. Inside a kernel, you access special functions to determine the current thread's ID and block ID within the grid:
+
+* `blockIdx().x`, `blockIdx().y`, `blockIdx().z`: The 1D, 2D, or 3D index of the current thread *block*.
+* `blockDim().x`, `blockDim().y`, `blockDim().z`: The dimensions (number of threads) of the current thread block.
+* `threadIdx().x`, `threadIdx().y`, `threadIdx().z`: The 1D, 2D, or 3D index of the current thread *within its block*.
+* `gridDim().x`, `gridDim().y`, `gridDim().z`: The dimensions (number of blocks) of the grid of thread blocks.
+
+From these, you calculate a global unique index for each thread:
+
+```{julia}
+# A simple kernel that adds two arrays element-wise
+function add_kernel!(C, A, B)
+    # Calculate global linear index for the current thread
+    # This formula works for 1D arrays or flat 2D/3D arrays
+    idx = (blockIdx().x - 1) * blockDim().x + threadIdx().x
+
+    # Check if the index is within the bounds of the array
+    # This is crucial as you often launch more threads than elements
+    if idx <= length(A)
+        @inbounds C[idx] = A[idx] + B[idx] # @inbounds for performance, assumes bounds checking is handled
+    end
+    return
+end
+
+# Host-side function to prepare data and launch the kernel
+function gpu_add_arrays(A_host, B_host)
+    # Move input data to the GPU
+    A_d = CuArray(A_host)
+    B_d = CuArray(B_host)
+    # Allocate memory for the result on the GPU
+    C_d = similar(A_d)
+
+    N = length(A_host)
+    # Determine launch configuration:
+    # threads_per_block: How many threads in each block (typically 128, 256, 512, 1024)
+    # blocks_per_grid: How many blocks needed to cover all N elements
+    threads_per_block = 256
+    blocks_per_grid = ceil(Int, N / threads_per_block)
+
+    # Launch the kernel!
+    @cuda threads=threads_per_block blocks=blocks_per_grid add_kernel!(C_d, A_d, B_d)
+
+    # Synchronize the GPU (wait for all kernel computations to finish)
+    # This happens implicitly when you transfer data back or if you need results immediately.
+    # explicit CUDA.synchronize() can be used for timing.
+
+    # Move the result back to the CPU (if needed for further CPU processing)
+    return Array(C_d)
+end
+
+N_gpu_example = 10^7
+A_h = rand(Float32, N_gpu_example)
+B_h = rand(Float32, N_gpu_example)
+
+println("Starting custom GPU kernel array addition...")
+@time C_h_gpu_custom = gpu_add_arrays(A_h, B_h)
+println("Custom GPU kernel array addition finished.")
+```
+
+This direct kernel programming gives you maximum control but can be complex.
+
+### Broadcast Fusion: The Magic of Element-wise Operations
+
+When you perform element-wise operations on `CuArray`s using Julia's broadcasting syntax (e.g., `.+`, `.*`, or the dot syntax `@.`), `CUDA.jl` automatically compiles and launches an optimized GPU kernel for you. This is incredibly efficient because it can fuse multiple operations into a single kernel, minimizing memory access and launch overheads.
+
+```{julia}
+using CUDA
+
+N_implicit = 10^7
+X_h = rand(Float32, N_implicit)
+Y_h = rand(Float32, N_implicit)
+
+# Move to device once
+X_d = CuArray(X_h)
+Y_d = CuArray(Y_h)
+
+println("\nStarting GPU implicit kernel operations...")
+# Complex broadcast operation - Julia automatically generates an efficient kernel
+@time Z_d = @. X_d * sin(Y_d^2) + sqrt(X_d)
+println("GPU implicit kernel operations finished.")
+
+# Julia's Base functions often have GPU implementations that work seamlessly
+@time S_d = CUDA.sum(Z_d) # Optimized GPU reduction
+println("GPU sum finished.")
+
+# If you need the result back on the CPU:
+Z_h_implicit = Array(Z_d)
+S_h_implicit = S_d[] # Get the scalar value from the CuArray scalar
+
+# Compare with CPU version for timing and correctness
+println("\nStarting CPU operations for comparison...")
+@time Z_h_cpu = @. X_h * sin(Y_h^2) + sqrt(X_h)
+println("CPU element-wise finished.")
+@time S_h_cpu = sum(Z_h_cpu)
+println("CPU sum finished.")
+
+println("Difference in sum: $(abs(S_h_implicit - S_h_cpu))")
+```
+
+You'll often find that for typical data processing tasks, this implicit kernel generation through broadcasting is all you need, and it performs remarkably well.
+
+## Performance Considerations and Best Practices
+
+While GPUs are powerful, they are not a magic bullet. To get the most out of them, consider these points:
+
+* **Data Transfer Overhead:** Copying data between CPU and GPU is expensive. Avoid frequent transfers. Try to keep data on the GPU for as long as possible, processing it in stages there.
+* **Kernel Launch Overhead:** There's a small overhead associated with launching each kernel. For very small computations, this overhead can sometimes negate the GPU's advantage. Try to combine multiple small operations into a single larger kernel (which Julia's broadcast fusion often does for you).
+* **Memory Management:** GPU memory is a finite resource. Be mindful of large allocations. `CUDA.jl` generally manages memory well, but for very large problems, you might need to reuse memory or process data in chunks.
+* **Algorithm Choice:** Not all algorithms are "GPU-friendly." Algorithms with frequent, unpredictable memory access patterns or high thread divergence (where threads in a warp take different execution paths) will perform poorly. Algorithms that operate uniformly on large datasets (e.g., matrix multiplication, image filters, finite difference methods) are ideal.
+
+## Profiling CUDA
+
+Once you have your CUDA code running, you'll often want to optimize its performance. Profiling helps you identify bottlenecks in your code. Julia's CUDA.jl package integrates well with NVIDIA's profiling tools.
+
+### Basic GPU Profiling
+
+For a quick and easy way to see the time spent on individual kernel launches within your Julia code, you can use the built-in `CUDA.@profile` macro. This provides a high-level overview directly in your Julia REPL or output.
+
+```{julia}
+using CUDA
+
+function saxpy_kernel!(Y, A, X)
+    idx = (blockIdx().x - 1) * blockDim().x + threadIdx().x
+    if idx <= length(Y)
+        @inbounds Y[idx] = A * X[idx] + Y[idx]
+    end
+    return
+end
+
+N = 10_000_000
+A_scalar = Float32(2.0)
+X = CUDA.fill(Float32(1.0), N)
+Y = CUDA.fill(Float32(3.0), N)
+
+# Profile the kernel call
+CUDA.@profile begin
+    @cuda threads=256 blocks=cld(N, 256) saxpy_kernel!(Y, A_scalar, X)
+end
+```
+
+This tells you the execution time of the kernel itself on the GPU.
+
+For deeper profiling you will want to use [NVIDIA Nsight Systems](https://developer.nvidia.com/nsight-systems).
 
 # Distributed computing
 
-* [Distributed.jl](https://github.com/JuliaLang/Distributed.jl)
-* [Malt.jl](https://github.com/JuliaPluto/Malt.jl)
+In this section we briefly investigate [Distributed.jl](https://github.com/JuliaLang/Distributed.jl) for distributed computing.
 
-# GPUs
+Distributed.jl runs on `workers`: processes running on the current host or on other hosts communicating via the network. Like multithreading, Julia then keeps track of *remote references* to objects that reside on other workers. However, unlike multithreading where data is shared in the same memory space, in distributed computing, data must be explicitly sent between workers. That means that data must also be serialized between processes.
 
-* [juliagpu.org](https://juliagpu.org/)
-* [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl)
 
-# Example - Oceananigans
+```{julia}
+using Distributed
 
-Let's explore the [Oceananigans.jl](https://github.com/CliMA/Oceananigans.jl) package and try to run it both on GPU and on CPU.
+# Start with a few processes if not already done
+if nprocs() == 1
+    addprocs(3) # Adds 3 workers, total 4 processes
+end
+
+# the beauty of Distributed.jl is that you can run this on multiple machines on a cluster,
+# e.g. the following would add a process on another machine by SSHing into it
+# addprocs("user@othermachine")
+```
+
+See our workers:
+
+```{julia}
+println(workers())
+```
+
+We can execute expressions on all workers with `@everywhere`:
+
+```{julia}
+# The @everywhere macro runs this on all processes, i.e. it created `remote_task` in all procs
+@everywhere function remote_task(x)
+    println("Hello from worker $(myid()) with x = $x")
+    sleep(x) # Simulate some work
+    return "Worker $(myid()) finished task in $x seconds"
+end
+```
+
+Then spawn tasks on workers with `@spawnat`
+
+```{julia}
+# Spawn a task on worker 2
+f1 = @spawnat 2 remote_task(3)
+```
+
+```{julia}
+@everywhere function estimate_pi_hits(num_samples_per_worker)
+    hits = 0
+    for _ in 1:num_samples_per_worker
+        x = rand()
+        y = rand()
+        if x^2 + y^2 <= 1.0
+            hits += 1
+        end
+    end
+    return hits
+end
+
+total_samples = 10^8
+num_workers = nprocs() - 1 # Exclude the master process from the work distribution
+samples_per_worker = ceil(Int, total_samples / num_workers)
+
+println("Starting distributed estimation of pi with $(num_workers) workers...")
+
+@time begin
+    # The `(+)` specifies a reduction operation: sum the results from each worker
+    total_hits = @distributed (+) for i in 1:num_workers
+        # Each worker calculates hits for its share of samples
+        estimate_pi_hits(samples_per_worker)
+    end
+
+    estimated_pi = 4.0 * total_hits / (samples_per_worker * num_workers)
+end
+
+println("Estimated Pi: $estimated_pi")
+println("Actual Pi: $(π)")
+
+# Clean up workers if they were added programmatically
+rmprocs(workers())
+```
+
+
+## Things to be aware of
+
+* **Memory Isolation:** Each process has its own memory space. This is a double-edged sword, but it prevents accidental data corruption from one part of the code affecting another, which can be a challenge in shared-memory multithreading. It also means you're not limited by the total RAM of a single machine.
+* **Communication Overhead:** Sending data between processes (especially across a network) is significantly slower than accessing shared memory. This can easily negate any performance gains if your task requires frequent, small data transfers.
+* **Data Serialization/Deserialization:** Data sent between processes must be converted into a byte stream (serialized) on the sender side and then reconstructed (deserialized) on the receiver side. This adds computational overhead.
+* **Latency:** It takes time for a message to travel from one process to another, even on the same machine, adds latency that isn't present with shared memory.
+* **Load Balancing:** Ensuring that work is evenly distributed among workers can be challenging. If one worker gets a disproportionately large or complex task, it can become a bottleneck.
+
+## See also
+
+* [ClusterManagers.jl](https://github.com/JuliaParallel/ClusterManagers.jl) for various HPC cluster managers for Distributed.jl
+* [a great blog post](https://juntian.me/programming/A_Deep_Dive_into_Distributed.jl/) by Jun Tian for more in-depth.
+
 
 # Additional online resources
 
